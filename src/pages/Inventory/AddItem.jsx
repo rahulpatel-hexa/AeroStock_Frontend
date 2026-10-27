@@ -52,6 +52,7 @@ export default function AddItem() {
   })
 
   const selectedCategoryId = watch('category')
+  const trackingType = watch('trackingType')
 
   const { data: subCategories = [], isLoading: subCategoriesLoading } =
     useAllSubCategories(selectedCategoryId)
@@ -172,9 +173,15 @@ export default function AddItem() {
             <input placeholder="ALT-240" className={inputClass(errors.partNumber)} {...register('partNumber')} />
           </FormField>
 
-          <FormField label="Serial Number" error={errors.serialNumber}>
+          <FormField
+            label="Serial Number"
+            required={trackingType === 'serialized'}
+            error={errors.serialNumber}
+          >
             <input
-              placeholder="Optional serial number"
+              placeholder={
+                trackingType === 'serialized' ? 'Enter serial number' : 'Optional serial number'
+              }
               className={inputClass(errors.serialNumber)}
               {...register('serialNumber')}
             />

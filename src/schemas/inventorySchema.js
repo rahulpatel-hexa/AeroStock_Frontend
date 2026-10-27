@@ -45,4 +45,11 @@ export const inventorySchema = z
         message: 'Serialized item quantity must be 1',
       })
     }
+    if (data.trackingType === 'serialized' && !data.serialNumber?.trim()) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['serialNumber'],
+        message: 'Serial number is required for serialized items',
+      })
+    }
   })
