@@ -10,6 +10,9 @@ import EditItem from './pages/Inventory/EditItem'
 import ViewItem from './pages/Inventory/ViewItem'
 import Inventory from './pages/Inventory'
 import StockHistory from './pages/StockHistory'
+import Dashboard from './pages/Dashboard'
+import Reports from './pages/Reports'
+import Settings from './pages/Settings'
 import { NAV_ITEMS } from './utils/constants'
 import AddCategory from './pages/Categories/AddCategory'
 import EditCategory from './pages/Categories/EditCategory'
@@ -23,7 +26,14 @@ const Placeholder = ({ title }) => (
 )
 
 // Jin pages ke real components ban gaye, unko placeholder se hatao
-const REAL_PAGES = ['/categories', '/inventory', '/stock-history']
+const REAL_PAGES = [
+  '/dashboard',
+  '/categories',
+  '/inventory',
+  '/stock-history',
+  '/reports',
+  '/settings',
+]
 
 export default function App() {
   return (
@@ -38,6 +48,8 @@ export default function App() {
         }
       >
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
+
+        <Route path="/dashboard" element={<Dashboard />} />
 
         <Route path="/categories" element={<Categories />} />
         <Route path="/categories/new" element={<AddCategory />} />
@@ -59,6 +71,10 @@ export default function App() {
         <Route path="/inventory/:id" element={<ViewItem />} />
 
         <Route path="/stock-history" element={<StockHistory />} />
+
+        <Route path="/reports" element={<Reports />} />
+
+        <Route path="/settings" element={<Settings />} />
 
         {NAV_ITEMS.filter((n) => !REAL_PAGES.includes(n.path)).map(({ path, label }) => (
           <Route key={path} path={path} element={<Placeholder title={label} />} />

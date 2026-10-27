@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, ChevronLeft, ChevronRight, MoreHorizontal } from 'lucide-react'
+import { Search, ChevronLeft, ChevronRight, Eye, Pencil, PackagePlus, MoreHorizontal } from 'lucide-react'
 import { useInventoryItems } from '../../hooks/useInventory'
 
 const PAGE_SIZE = 10
@@ -119,13 +119,13 @@ export default function Inventory() {
           >
             + Add Item
           </button>
-          <button
+          {/* <button
             type="button"
             onClick={() => navigate('/inventory/log-stock')}
             className="rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
           >
             Log Stock
-          </button>
+          </button> */}
         </div>
       </div>
 
@@ -137,9 +137,8 @@ export default function Inventory() {
               key={f.key}
               type="button"
               onClick={() => handleStatus(f.key)}
-              className={`rounded-full px-4 py-1.5 text-xs font-semibold transition-colors ${
-                active ? f.activeClass : f.idleClass
-              }`}
+              className={`rounded-full px-4 py-1.5 text-xs font-semibold transition-colors ${active ? f.activeClass : f.idleClass
+                }`}
             >
               {f.label}
             </button>
@@ -157,41 +156,45 @@ export default function Inventory() {
           <table className="w-full min-w-[720px] text-left text-sm">
             <thead>
               <tr className="border-b border-slate-100 text-xs font-semibold uppercase tracking-wide text-slate-400">
-                <th className="px-6 py-3 font-semibold">Inventory ID</th>
+                <th className="w-14 pl-6 pr-2 py-3 font-semibold">SN</th>
+                <th className="pl-2 pr-4 py-3 font-semibold">Inventory ID</th>
                 <th className="px-6 py-3 font-semibold">Description</th>
                 <th className="px-6 py-3 font-semibold">Part Number</th>
                 <th className="px-6 py-3 font-semibold">Quantity</th>
                 <th className="px-6 py-3 font-semibold">Status</th>
-                <th className="px-6 py-3 font-semibold">Actions</th>
+                <th className="px-6 py-3 text-right font-semibold">Actions</th>
               </tr>
             </thead>
             <tbody>
               {isLoading && (
                 <tr>
-                  <td colSpan={6} className="px-6 py-10 text-center text-slate-500">
+                  <td colSpan={7} className="px-6 py-10 text-center text-slate-500">
                     Loading inventory…
                   </td>
                 </tr>
               )}
               {isError && (
                 <tr>
-                  <td colSpan={6} className="px-6 py-10 text-center text-red-500">
+                  <td colSpan={7} className="px-6 py-10 text-center text-red-500">
                     {error?.message || 'Failed to load inventory'}
                   </td>
                 </tr>
               )}
               {!isLoading && !isError && filtered.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-6 py-10 text-center text-slate-500">
+                  <td colSpan={7} className="px-6 py-10 text-center text-slate-500">
                     No inventory items found
                   </td>
                 </tr>
               )}
               {!isLoading &&
                 !isError &&
-                filtered.map((item) => (
+                filtered.map((item, index) => (
                   <tr key={item.id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/80">
-                    <td className="px-6 py-3.5 font-semibold text-slate-800">
+                    <td className="w-14 pl-6 pr-2 py-3.5 text-slate-600">
+                      {(currentPage - 1) * PAGE_SIZE + index + 1}
+                    </td>
+                    <td className="pl-2 pr-4 py-3.5 font-semibold text-slate-800">
                       {item.inventoryCode || item.id}
                     </td>
                     <td className="px-6 py-3.5 text-slate-700">{item.description}</td>
@@ -204,28 +207,28 @@ export default function Inventory() {
                         {item.status}
                       </span>
                     </td>
-                    <td className="px-6 py-3.5">
-                      <div className="flex items-center gap-2">
+                    <td className="px-6 py-3.5 text-right">
+                      <div className="flex items-center justify-end gap-5">
                         <button
                           type="button"
                           onClick={() => navigate(`/inventory/${item.id}`)}
-                          className="text-sm font-medium text-[#6c5ce7] hover:underline"
+                          className="flex items-center gap-1.5 text-sm font-semibold text-[#6c5ce7] hover:text-[#5a4bd1]"
                         >
-                          View
+                          <Eye size={15} /> View
                         </button>
                         <button
                           type="button"
                           onClick={() => navigate(`/inventory/${item.id}/edit`)}
-                          className="text-sm font-medium text-slate-600 hover:underline"
+                          className="flex items-center gap-1.5 text-sm font-semibold text-slate-500 hover:text-[#6c5ce7]"
                         >
-                          Edit
+                          <Pencil size={15} /> Edit
                         </button>
                         <button
                           type="button"
-                          className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
-                          aria-label="More actions"
+                          onClick={() => navigate(`/inventory/log-stock?itemId=${item.id}`)}
+                          className="flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
                         >
-                          <MoreHorizontal className="size-4" />
+                          <PackagePlus size={14} /> Log Stock
                         </button>
                       </div>
                     </td>
@@ -254,11 +257,10 @@ export default function Inventory() {
                 key={n}
                 type="button"
                 onClick={() => setPage(n)}
-                className={`min-w-8 rounded-lg px-2.5 py-1 text-sm font-medium ${
-                  currentPage === n
-                    ? 'bg-[#6c5ce7] text-white'
-                    : 'text-slate-600 hover:bg-slate-100'
-                }`}
+                className={`min-w-8 rounded-lg px-2.5 py-1 text-sm font-medium ${currentPage === n
+                  ? 'bg-[#6c5ce7] text-white'
+                  : 'text-slate-600 hover:bg-slate-100'
+                  }`}
               >
                 {n}
               </button>

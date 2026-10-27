@@ -21,6 +21,16 @@ export const getCategories = async (params = {}) => {
   return data.data.items
 }
 
+export const getCategoriesPage = async (params = {}) => {
+  const { data } = await api.get('/categories', {
+    params: { page: 1, limit: 10, ...params },
+  })
+  return {
+    items: (data.data.items ?? []).filter((c) => c.parentId == null),
+    pagination: data.data.pagination ?? {},
+  }
+}
+
 // Create API: data.data.category
 export const createCategory = async (payload) => {
   const { data } = await api.post('/categories', payload)

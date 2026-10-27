@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react'
-import { Search, ChevronLeft } from 'lucide-react'
+import { Search, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useStockMovements } from '../../hooks/useInventory'
+
+const PAGE_SIZE = 10
 
 const MOVEMENT_LABELS = {
   RECEIVED: 'Received',
@@ -42,26 +44,44 @@ const mapRow = (item) => ({
   movement: movementLabel(item.movementType),
   quantity: Number(item.quantity ?? 0),
   user: item.userName || '—',
-  reference: item.invoiceNumber || '—',
 })
 
 export default function StockHistory() {
   const [search, setSearch] = useState('')
-  const { data, isLoading, isError, error } = useStockMovements({ page: 1, limit: 100 })
+  const [page, setPage] = useState(1)
+
+  const listParams = useMemo(() => {
+    const params = { page, limit: PAGE_SIZE }
+    const q = search.trim()
+    if (q) params.search = q
+    return params
+  }, [page, search])
+
+  const { data, isLoading, isError, error } = useStockMovements(listParams)
 
   const rows = useMemo(() => (data?.items ?? []).map(mapRow), [data?.items])
 
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase()
-    if (!q) return rows
-    return rows.filter(
-      (row) =>
-        String(row.itemName).toLowerCase().includes(q) ||
-        String(row.reference).toLowerCase().includes(q) ||
-        String(row.user).toLowerCase().includes(q) ||
-        String(row.movement).toLowerCase().includes(q)
-    )
-  }, [rows, search])
+  const pagination = data?.pagination ?? {}
+  const totalRecords = Number(pagination.total ?? rows.length)
+  const totalPages = Math.max(
+    1,
+    Number(pagination.totalPages ?? pagination.lastPage ?? Math.ceil(totalRecords / PAGE_SIZE) ?? 1)
+  )
+  const currentPage = Math.min(page, totalPages)
+  const showingFrom = rows.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1
+  const showingTo = rows.length === 0 ? 0 : showingFrom + rows.length - 1
+
+  const handleSearch = (value) => {
+    setSearch(value)
+    setPage(1)
+  }
+
+  const pageNumbers = Array.from({ length: Math.min(3, totalPages) }, (_, i) => {
+    if (totalPages <= 3) return i + 1
+    if (currentPage <= 2) return i + 1
+    if (currentPage >= totalPages - 1) return totalPages - 2 + i
+    return currentPage - 1 + i
+  })
 
   return (
     <div>
@@ -85,8 +105,8 @@ export default function StockHistory() {
           <input
             type="search"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search item, invoice or user..."
+            onChange={(e) => handleSearch(e.target.value)}
+            placeholder="Search item or user..."
             className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-[#6c5ce7] focus:ring-2 focus:ring-[#6c5ce7]/20"
           />
         </div>
@@ -103,12 +123,12 @@ export default function StockHistory() {
           <table className="w-full min-w-[720px] text-left text-sm">
             <thead>
               <tr className="border-b border-slate-100 text-xs font-semibold uppercase tracking-wide text-slate-400">
-                <th className="px-6 py-3 font-semibold">Date</th>
+                <th className="w-14 pl-6 pr-2 py-3 font-semibold">SN</th>
+                <th className="pl-2 pr-4 py-3 font-semibold">Date</th>
                 <th className="px-6 py-3 font-semibold">Inventory Item</th>
                 <th className="px-6 py-3 font-semibold">Movement</th>
                 <th className="px-6 py-3 font-semibold">Quantity</th>
                 <th className="px-6 py-3 font-semibold">User</th>
-                <th className="px-6 py-3 font-semibold">Reference</th>
               </tr>
             </thead>
             <tbody>
@@ -126,7 +146,7 @@ export default function StockHistory() {
                   </td>
                 </tr>
               )}
-              {!isLoading && !isError && filtered.length === 0 && (
+              {!isLoading && !isError && rows.length === 0 && (
                 <tr>
                   <td colSpan={6} className="px-6 py-10 text-center text-slate-500">
                     No stock movements found
@@ -135,20 +155,62 @@ export default function StockHistory() {
               )}
               {!isLoading &&
                 !isError &&
-                filtered.map((row) => (
+                rows.map((row, index) => (
                   <tr key={row.id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/80">
-                    <td className="px-6 py-3.5 text-slate-600">{formatDate(row.date)}</td>
+                    <td className="w-14 pl-6 pr-2 py-3.5 text-slate-600">
+                      {(currentPage - 1) * PAGE_SIZE + index + 1}
+                    </td>
+                    <td className="pl-2 pr-4 py-3.5 text-slate-600">{formatDate(row.date)}</td>
                     <td className="px-6 py-3.5 font-semibold text-slate-800">{row.itemName}</td>
                     <td className="px-6 py-3.5 text-slate-700">{row.movement}</td>
                     <td className={`px-6 py-3.5 ${quantityClass(row.quantity, row.movement)}`}>
                       {formatQuantity(row.quantity, row.movement)}
                     </td>
                     <td className="px-6 py-3.5 text-slate-700">{row.user}</td>
-                    <td className="px-6 py-3.5 text-slate-600">{row.reference}</td>
                   </tr>
                 ))}
             </tbody>
           </table>
+        </div>
+
+        <div className="flex flex-col gap-3 border-t border-slate-100 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-slate-500">
+            Showing {showingFrom}–{showingTo} of {totalRecords.toLocaleString()} items
+          </p>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              disabled={currentPage <= 1 || isLoading}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+              aria-label="Previous page"
+            >
+              <ChevronLeft className="size-4" />
+            </button>
+            {pageNumbers.map((n) => (
+              <button
+                key={n}
+                type="button"
+                onClick={() => setPage(n)}
+                className={`min-w-8 rounded-lg px-2.5 py-1 text-sm font-medium ${
+                  currentPage === n
+                    ? 'bg-[#6c5ce7] text-white'
+                    : 'text-slate-600 hover:bg-slate-100'
+                }`}
+              >
+                {n}
+              </button>
+            ))}
+            <button
+              type="button"
+              disabled={currentPage >= totalPages || isLoading}
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+              aria-label="Next page"
+            >
+              <ChevronRight className="size-4" />
+            </button>
+          </div>
         </div>
       </div>
     </div>

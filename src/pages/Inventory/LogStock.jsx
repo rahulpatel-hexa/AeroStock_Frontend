@@ -1,8 +1,7 @@
 import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ChevronLeft } from 'lucide-react'
 import { useCreateStockMovement, useInventoryItems } from '../../hooks/useInventory'
-import { CURRENCIES } from '../../utils/constants'
 import { inputClass } from '../../utils/helpers'
 
 const todayIso = () => new Date().toISOString().slice(0, 10)
@@ -10,7 +9,8 @@ const todayIso = () => new Date().toISOString().slice(0, 10)
 const MOVEMENT_TYPES = [
   { value: 'RECEIVED', label: '+ Received', activeClass: 'border-emerald-500 text-emerald-600' },
   { value: 'SOLD', label: '− Sold', activeClass: 'border-rose-500 text-rose-600' },
-  { value: 'INTERNAL_USE', label: '− Internal Use', activeClass: 'border-rose-500 text-rose-600' },
+  // { value: 'INTERNAL_USE', label: '− Internal Use', activeClass: 'border-rose-500 text-rose-600' },
+  { value: 'RESERVED', label: '− Reserved', activeClass: 'border-amber-500 text-amber-600' },
 ]
 
 const emptyToNull = (value) => {
@@ -20,18 +20,15 @@ const emptyToNull = (value) => {
 
 export default function LogStock() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const itemId = searchParams.get('itemId') ?? ''
   const createMovement = useCreateStockMovement()
-  const { data, isLoading } = useInventoryItems({ page: 1, limit: 100 })
+  const { data } = useInventoryItems({ page: 1, limit: 100 })
   const items = data?.items ?? []
 
-  const [itemId, setItemId] = useState('')
   const [movementType, setMovementType] = useState('RECEIVED')
   const [quantity, setQuantity] = useState('')
-  const [unitPrice, setUnitPrice] = useState('')
-  const [currency, setCurrency] = useState('USD')
-  const [invoiceNumber, setInvoiceNumber] = useState('')
   const [transactionDate, setTransactionDate] = useState(todayIso)
-  const [reason, setReason] = useState('')
   const [notes, setNotes] = useState('')
   const [error, setError] = useState('')
 
@@ -48,17 +45,12 @@ export default function LogStock() {
 
   const onConfirm = async (event) => {
     event.preventDefault()
-    if (!selected) {
-      setError('Select an inventory item')
+    if (!itemId || !selected) {
+      setError('Inventory item is required')
       return
     }
     if (!/^\d+$/.test(quantity.trim()) || Number(quantity) < 1) {
       setError('Enter a whole number greater than 0')
-      return
-    }
-    const priceTrimmed = unitPrice.trim()
-    if (priceTrimmed && !/^\d+(\.\d{1,2})?$/.test(priceTrimmed)) {
-      setError('Enter a valid unit price')
       return
     }
     if (decreasesStock && stockAfter < 0) {
@@ -70,11 +62,7 @@ export default function LogStock() {
     const payload = {
       movementType,
       quantity: Number(quantity),
-      unitPrice: priceTrimmed ? Number(priceTrimmed) : null,
-      currency: currency || selected.currency || 'USD',
-      invoiceNumber: emptyToNull(invoiceNumber),
       transactionDate,
-      reason: emptyToNull(reason),
       notes: emptyToNull(notes),
     }
 
@@ -91,7 +79,7 @@ export default function LogStock() {
       <div className="mb-6 flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-800">Log Stock</h1>
-          <p className="mt-1 text-sm text-slate-500">Record stock received, sold or used</p>
+          <p className="mt-1 text-sm text-slate-500">Record stock received, sold or reserved</p>
         </div>
         <button
           type="button"
@@ -113,31 +101,6 @@ export default function LogStock() {
             {selected.description} · {selected.inventoryCode || selected.id}
           </p>
         )}
-
-        <label className="mt-5 block text-xs font-semibold text-slate-500">
-          Inventory item
-          <select
-            value={itemId}
-            onChange={(e) => {
-              const nextId = e.target.value
-              setItemId(nextId)
-              setError('')
-              const nextItem = items.find((item) => String(item.id) === nextId)
-              if (nextItem?.currency && CURRENCIES.includes(nextItem.currency)) {
-                setCurrency(nextItem.currency)
-              }
-            }}
-            disabled={isLoading}
-            className={`${inputClass(false)} mt-2`}
-          >
-            <option value="">{isLoading ? 'Loading items…' : 'Select inventory item'}</option>
-            {items.map((item) => (
-              <option key={item.id} value={String(item.id)}>
-                {item.description} · {item.inventoryCode || item.id}
-              </option>
-            ))}
-          </select>
-        </label>
 
         <div className="mt-5 rounded-xl bg-[#f3f0ff] px-4 py-3">
           <p className="text-xs font-semibold text-slate-500">Current Stock</p>
@@ -185,49 +148,6 @@ export default function LogStock() {
               className={`${inputClass(false)} mt-2`}
             />
           </label>
-          <label className="block text-xs font-semibold text-slate-500">
-            Unit Price
-            <input
-              inputMode="decimal"
-              value={unitPrice}
-              onChange={(e) => {
-                setUnitPrice(e.target.value)
-                setError('')
-              }}
-              placeholder="100.50"
-              className={`${inputClass(false)} mt-2`}
-            />
-          </label>
-          <label className="block text-xs font-semibold text-slate-500">
-            Currency
-            <select
-              value={currency}
-              onChange={(e) => setCurrency(e.target.value)}
-              className={`${inputClass(false)} mt-2`}
-            >
-              {CURRENCIES.map((code) => (
-                <option key={code}>{code}</option>
-              ))}
-            </select>
-          </label>
-          <label className="block text-xs font-semibold text-slate-500">
-            Invoice Number
-            <input
-              value={invoiceNumber}
-              onChange={(e) => setInvoiceNumber(e.target.value)}
-              placeholder="PO-001"
-              className={`${inputClass(false)} mt-2`}
-            />
-          </label>
-          <label className="block text-xs font-semibold text-slate-500">
-            Reason
-            <input
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              placeholder="Purchase receipt"
-              className={`${inputClass(false)} mt-2`}
-            />
-          </label>
         </div>
 
         <label className="mt-5 block text-xs font-semibold text-slate-500">
@@ -235,7 +155,7 @@ export default function LogStock() {
           <input
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="Supplier delivery, sale or internal use"
+            placeholder="Supplier delivery, sale or reservation"
             className={`${inputClass(false)} mt-2`}
           />
         </label>

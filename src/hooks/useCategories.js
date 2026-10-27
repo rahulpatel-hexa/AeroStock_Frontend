@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import {
   getCategories,
+  getCategoriesPage,
   getAllCategories,
   createCategory,
   updateCategory,
@@ -43,6 +44,12 @@ export const useCategories = (params = {}) =>
       const items = await getCategories(params)
       return items.filter((c) => c.parentId === null)
     },
+  })
+
+export const useCategoriesPage = (params = {}) =>
+  useQuery({
+    queryKey: ['categories', 'page', params],
+    queryFn: () => getCategoriesPage(params),
   })
 
 export const useCreateCategory = () =>
