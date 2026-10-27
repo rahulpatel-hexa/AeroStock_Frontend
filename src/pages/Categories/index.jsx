@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useQueries } from '@tanstack/react-query'
 import { Pencil, Plus, ChevronLeft, ChevronRight } from 'lucide-react'
 import {
   useCategoriesPage,
@@ -7,10 +8,19 @@ import {
   useUpdateCategory,
   useDeleteCategory,
 } from '../../hooks/useCategories'
+import { getAllSubCategories } from '../../services/categoryService'
 import NameFormModal from './NameFormModal'
 import ConfirmDialog from '../../components/common/ConfirmDialog'
 
 const PAGE_SIZE = 10
+
+const resolveSubcategoryCount = (cat, query) => {
+  const fromItem =
+    cat.subcategoryCount ?? cat._count?.children ?? cat.childrenCount
+  if (fromItem != null) return Number(fromItem)
+  if (query?.isLoading || query?.isPending) return null
+  return Number(query?.data?.length ?? 0)
+}
 
 export default function Categories() {
   const navigate = useNavigate()
@@ -33,6 +43,14 @@ export default function Categories() {
     if (currentPage <= 2) return i + 1
     if (currentPage >= totalPages - 1) return totalPages - 2 + i
     return currentPage - 1 + i
+  })
+
+  const subcategoryQueries = useQueries({
+    queries: categories.map((cat) => ({
+      queryKey: ['subcategories', 'all', cat.id],
+      queryFn: () => getAllSubCategories(cat.id),
+      enabled: !!cat.id,
+    })),
   })
 
   const createMutation = useCreateCategory()
@@ -90,13 +108,14 @@ export default function Categories() {
               <tr className="border-b border-slate-100 text-xs font-semibold uppercase tracking-wide text-slate-400">
                 <th className="w-14 pl-6 pr-2 py-3 font-semibold">SN</th>
                 <th className="pl-2 pr-4 py-3 font-semibold">Category</th>
+                <th className="px-6 py-3 font-semibold">Subcategories</th>
                 <th className="px-6 py-3 text-right font-semibold">Actions</th>
               </tr>
             </thead>
             <tbody>
               {isLoading && (
                 <tr>
-                  <td colSpan={3} className="px-6 py-10 text-center text-slate-500">
+                  <td colSpan={4} className="px-6 py-10 text-center text-slate-500">
                     Loading...
                   </td>
                 </tr>
@@ -104,7 +123,7 @@ export default function Categories() {
 
               {isError && (
                 <tr>
-                  <td colSpan={3} className="px-6 py-10 text-center text-red-500">
+                  <td colSpan={4} className="px-6 py-10 text-center text-red-500">
                     {error.message}
                   </td>
                 </tr>
@@ -112,7 +131,7 @@ export default function Categories() {
 
               {!isLoading && !isError && categories.length === 0 && (
                 <tr>
-                  <td colSpan={3} className="px-6 py-10 text-center text-slate-500">
+                  <td colSpan={4} className="px-6 py-10 text-center text-slate-500">
                     No categories found
                   </td>
                 </tr>
@@ -120,7 +139,9 @@ export default function Categories() {
 
               {!isLoading &&
                 !isError &&
-                categories.map((cat, index) => (
+                categories.map((cat, index) => {
+                  const count = resolveSubcategoryCount(cat, subcategoryQueries[index])
+                  return (
                   <tr
                     key={cat.id}
                     onClick={() => navigate(`/categories/${cat.id}`)}
@@ -130,6 +151,9 @@ export default function Categories() {
                       {(currentPage - 1) * PAGE_SIZE + index + 1}
                     </td>
                     <td className="pl-2 pr-4 py-3.5 font-semibold text-slate-800">{cat.name}</td>
+                    <td className="px-6 py-3.5 text-slate-600">
+                      {count == null ? '—' : count}
+                    </td>
                     <td className="px-6 py-3.5 text-right">
                       <div className="flex items-center justify-end gap-8">
                         <button
@@ -155,7 +179,8 @@ export default function Categories() {
                       </div>
                     </td>
                   </tr>
-                ))}
+                  )
+                })}
             </tbody>
           </table>
         </div>
