@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Pencil, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Pencil, Plus, ChevronLeft, ChevronRight } from 'lucide-react'
 import {
   useCategoriesPage,
   useCreateCategory,
@@ -138,10 +138,9 @@ export default function Categories() {
                             e.stopPropagation()
                             navigate(`/categories/${cat.id}/subcategories/new`)
                           }}
-                          // className="text-xs font-semibold text-[#6c5ce7] hover:underline"
-                          className="text-sm font-semibold text-[#6c5ce7] hover:text-[#5a4bd1]"
+                          className="flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
                         >
-                          Add subcategory
+                          <Plus size={14} /> Add subcategory
                         </button>
                         <button
                           type="button"

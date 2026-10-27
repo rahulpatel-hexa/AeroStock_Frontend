@@ -190,7 +190,11 @@ export default function Inventory() {
               {!isLoading &&
                 !isError &&
                 filtered.map((item, index) => (
-                  <tr key={item.id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/80">
+                  <tr
+                    key={item.id}
+                    onClick={() => navigate(`/inventory/${item.id}`)}
+                    className="cursor-pointer border-b border-slate-50 last:border-0 hover:bg-slate-50/80"
+                  >
                     <td className="w-14 pl-6 pr-2 py-3.5 text-slate-600">
                       {(currentPage - 1) * PAGE_SIZE + index + 1}
                     </td>
@@ -207,21 +211,24 @@ export default function Inventory() {
                         {item.status}
                       </span>
                     </td>
-                    <td className="px-6 py-3.5 text-right">
+                    <td
+                      className="px-6 py-3.5 text-right"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <div className="flex items-center justify-end gap-5">
-                        <button
-                          type="button"
-                          onClick={() => navigate(`/inventory/${item.id}`)}
-                          className="flex items-center gap-1.5 text-sm font-semibold text-[#6c5ce7] hover:text-[#5a4bd1]"
-                        >
-                          <Eye size={15} /> View
-                        </button>
                         <button
                           type="button"
                           onClick={() => navigate(`/inventory/${item.id}/edit`)}
                           className="flex items-center gap-1.5 text-sm font-semibold text-slate-500 hover:text-[#6c5ce7]"
                         >
                           <Pencil size={15} /> Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => navigate(`/inventory/${item.id}`)}
+                          className="flex items-center gap-1.5 text-sm font-semibold text-[#6c5ce7] hover:text-[#5a4bd1]"
+                        >
+                          <Eye size={15} /> View
                         </button>
                         <button
                           type="button"
