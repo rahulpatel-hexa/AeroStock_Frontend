@@ -104,7 +104,7 @@ export default function Login() {
                 </form>
 
                 <p className="mt-6 text-center text-xs text-slate-400">
-                    Demo: staff@aerostock.com / Staff@123
+                    Demo: admin@aerostock.com / Admin#531
                 </p>
             </div>
         </div>

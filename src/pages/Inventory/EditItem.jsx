@@ -292,7 +292,9 @@ export default function EditItem() {
             <input
               inputMode="numeric"
               placeholder="20"
-              className={inputClass(errors.quantity)}
+              readOnly
+              tabIndex={-1}
+              className={`${inputClass(errors.quantity)} cursor-not-allowed read-only:border-slate-200 read-only:bg-slate-100 read-only:text-slate-400 read-only:focus:border-slate-200 read-only:focus:ring-0`}
               {...register('quantity')}
             />
           </FormField>

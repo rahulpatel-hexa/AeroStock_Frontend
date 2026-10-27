@@ -57,6 +57,7 @@ export default function AddItem() {
     useAllSubCategories(selectedCategoryId)
 
   const { onChange: onCategoryChange, ...categoryRegister } = register('category')
+  const { onChange: onQuantityChange, ...quantityRegister } = register('quantity')
 
   const onSubmit = async (data) => {
     try {
@@ -210,7 +211,11 @@ export default function AddItem() {
               inputMode="numeric"
               placeholder="20"
               className={inputClass(errors.quantity)}
-              {...register('quantity')}
+              {...quantityRegister}
+              onChange={(e) => {
+                e.target.value = e.target.value.replace(/\D/g, '')
+                onQuantityChange(e)
+              }}
             />
           </FormField>
 
