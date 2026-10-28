@@ -5,6 +5,7 @@ import {
   History,
   BarChart3,
   Settings,
+  Users,
 } from 'lucide-react'
 
 export const NAV_ITEMS = [
@@ -13,7 +14,8 @@ export const NAV_ITEMS = [
   { label: 'Categories', path: '/categories', icon: Layers },
   { label: 'Stock History', path: '/stock-history', icon: History },
   { label: 'Reports', path: '/reports', icon: BarChart3 },
-  { label: 'Users & Settings', path: '/settings', icon: Settings },
+  { label: 'Users', path: '/users', icon: Users },
+  { label: 'Settings', path: '/settings', icon: Settings },
 ]
 
 

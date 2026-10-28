@@ -13,6 +13,10 @@ import StockHistory from './pages/StockHistory'
 import Dashboard from './pages/Dashboard'
 import Reports from './pages/Reports'
 import Settings from './pages/Settings'
+import Users from './pages/Users'
+import AddUser from './pages/Users/AddUser'
+import EditUser from './pages/Users/EditUser'
+import ViewUser from './pages/Users/ViewUser'
 import { NAV_ITEMS } from './utils/constants'
 import AddCategory from './pages/Categories/AddCategory'
 import EditCategory from './pages/Categories/EditCategory'
@@ -32,6 +36,7 @@ const REAL_PAGES = [
   '/inventory',
   '/stock-history',
   '/reports',
+  '/users',
   '/settings',
 ]
 
@@ -73,6 +78,11 @@ export default function App() {
         <Route path="/stock-history" element={<StockHistory />} />
 
         <Route path="/reports" element={<Reports />} />
+
+        <Route path="/users" element={<Users />} />
+        <Route path="/users/new" element={<AddUser />} />
+        <Route path="/users/:id/edit" element={<EditUser />} />
+        <Route path="/users/:id" element={<ViewUser />} />
 
         <Route path="/settings" element={<Settings />} />
 
