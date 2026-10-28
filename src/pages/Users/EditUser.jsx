@@ -102,23 +102,23 @@ export default function EditUser() {
             />
           </FormField>
 
-          <FormField label="Password" error={errors.password}>
+          {/* <FormField label="Password" error={errors.password}>
             <input
               type="password"
               placeholder="Leave blank to keep current"
               className={inputClass(errors.password)}
               {...register('password')}
             />
-          </FormField>
+          </FormField> */}
 
-          <div>
+          {/* <div>
             <p className="mb-1.5 text-xs font-semibold text-slate-500">Status</p>
             <label className="inline-flex cursor-pointer items-center gap-3 pt-2">
               <input type="checkbox" className="peer sr-only" {...register('isActive')} />
               <span className="relative h-6 w-11 rounded-full bg-slate-300 transition peer-checked:bg-[#6c5ce7] after:absolute after:left-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:transition peer-checked:after:translate-x-5" />
               <span className="text-sm text-slate-700">Enabled</span>
             </label>
-          </div>
+          </div> */}
         </div>
 
         <div className="mt-8 flex justify-end gap-3">

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Search, Pencil, Eye, ChevronLeft, ChevronRight } from 'lucide-react'
-import { useUsersPage } from '../../hooks/useUsers'
+import { useUsersPage, useUpdateUserStatus } from '../../hooks/useUsers'
 
 const PAGE_SIZE = 10
 
@@ -25,6 +25,8 @@ export default function Users() {
   }, [page, search])
 
   const { data, isLoading, isError, error } = useUsersPage(listParams)
+  const { mutate: updateStatus, isPending: isStatusPending, variables: statusVariables } =
+    useUpdateUserStatus()
 
   const users = data?.items ?? []
   const pagination = data?.pagination ?? {}
@@ -91,6 +93,7 @@ export default function Users() {
                 <th className="w-14 pl-6 pr-2 py-3 font-semibold">SN</th>
                 <th className="pl-2 pr-4 py-3 font-semibold">Name</th>
                 <th className="px-6 py-3 font-semibold">Email</th>
+                {/* <th className="px-6 py-3 font-semibold">Status</th> */}
                 <th className="px-6 py-3 font-semibold">Status</th>
                 <th className="px-6 py-3 text-right font-semibold">Actions</th>
               </tr>
@@ -98,7 +101,7 @@ export default function Users() {
             <tbody>
               {isLoading && (
                 <tr>
-                  <td colSpan={5} className="px-6 py-10 text-center text-slate-500">
+                  <td colSpan={6} className="px-6 py-10 text-center text-slate-500">
                     Loading...
                   </td>
                 </tr>
@@ -106,7 +109,7 @@ export default function Users() {
 
               {isError && (
                 <tr>
-                  <td colSpan={5} className="px-6 py-10 text-center text-red-500">
+                  <td colSpan={6} className="px-6 py-10 text-center text-red-500">
                     {error.message}
                   </td>
                 </tr>
@@ -114,7 +117,7 @@ export default function Users() {
 
               {!isLoading && !isError && users.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-6 py-10 text-center text-slate-500">
+                  <td colSpan={6} className="px-6 py-10 text-center text-slate-500">
                     No users found
                   </td>
                 </tr>
@@ -124,6 +127,8 @@ export default function Users() {
                 !isError &&
                 users.map((user, index) => {
                   const status = resolveStatus(user)
+                  const statusUpdating =
+                    isStatusPending && statusVariables?.id === user.id
                   return (
                     <tr
                       key={user.id}
@@ -137,12 +142,31 @@ export default function Users() {
                         {user.name}
                       </td>
                       <td className="px-6 py-3.5 text-slate-600">{user.email}</td>
-                      <td className="px-6 py-3.5">
+                      {/* <td className="px-6 py-3.5">
                         <span
                           className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${STATUS_BADGE[status]}`}
                         >
                           {status}
                         </span>
+                      </td> */}
+                      <td
+                        className="px-6 py-3.5"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <label
+                          className={`inline-flex items-center ${statusUpdating ? 'cursor-wait opacity-60' : 'cursor-pointer'}`}
+                        >
+                          <input
+                            type="checkbox"
+                            className="peer sr-only"
+                            checked={!!user.isActive}
+                            disabled={statusUpdating}
+                            onChange={(e) =>
+                              updateStatus({ id: user.id, isActive: e.target.checked })
+                            }
+                          />
+                          <span className="relative h-6 w-11 rounded-full bg-slate-300 transition peer-checked:bg-emerald-500 after:absolute after:left-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:transition peer-checked:after:translate-x-5" />
+                        </label>
                       </td>
                       <td
                         className="px-6 py-3.5 text-right"

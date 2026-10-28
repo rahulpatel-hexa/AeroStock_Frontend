@@ -3,6 +3,7 @@ import toast from 'react-hot-toast'
 import {
   createInventoryItem,
   updateInventoryItem,
+  updateInventoryItemStatus,
   createStockMovement,
   getStockMovements,
   getItemStockMovements,
@@ -57,6 +58,19 @@ export const useUpdateInventoryItem = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['inventory'] })
       toast.success('Item updated successfully')
+    },
+    onError: (error) => toast.error(error.message),
+  })
+}
+
+export const useUpdateInventoryItemStatus = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: updateInventoryItemStatus,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['inventory'] })
+      toast.success('Item status updated')
     },
     onError: (error) => toast.error(error.message),
   })

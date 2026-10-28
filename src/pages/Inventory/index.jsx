@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Search, ChevronLeft, ChevronRight, Eye, Pencil, PackagePlus, MoreHorizontal } from 'lucide-react'
-import { useInventoryItems } from '../../hooks/useInventory'
+import { useInventoryItems, useUpdateInventoryItemStatus } from '../../hooks/useInventory'
 
 const PAGE_SIZE = 10
 
@@ -33,6 +33,7 @@ const mapItem = (item) => ({
   partNumber: item.partNumber ?? '—',
   quantity: Number(item.quantityOnHand ?? 0),
   status: deriveStatus(item),
+  isActive: item.isActive ?? true,
 })
 
 export default function Inventory() {
@@ -49,6 +50,8 @@ export default function Inventory() {
   }, [page, search])
 
   const { data, isLoading, isError, error } = useInventoryItems(listParams)
+  const { mutate: updateStatus, isPending: isStatusPending, variables: statusVariables } =
+    useUpdateInventoryItemStatus()
 
   const items = useMemo(() => (data?.items ?? []).map(mapItem), [data?.items])
 
@@ -107,7 +110,7 @@ export default function Inventory() {
             type="search"
             value={search}
             onChange={(e) => handleSearch(e.target.value)}
-            placeholder="Search part number, serial number or description..."
+            placeholder="Search part number, serial number or item name..."
             className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-[#6c5ce7] focus:ring-2 focus:ring-[#6c5ce7]/20"
           />
         </div>
@@ -158,38 +161,42 @@ export default function Inventory() {
               <tr className="border-b border-slate-100 text-xs font-semibold uppercase tracking-wide text-slate-400">
                 <th className="w-14 pl-6 pr-2 py-3 font-semibold">SN</th>
                 <th className="pl-2 pr-4 py-3 font-semibold">Inventory ID</th>
-                <th className="px-6 py-3 font-semibold">Description</th>
+                <th className="px-6 py-3 font-semibold">Item Name</th>
                 <th className="px-6 py-3 font-semibold">Part Number</th>
                 <th className="px-6 py-3 font-semibold">Quantity</th>
                 <th className="px-6 py-3 font-semibold">Status</th>
+                <th className="px-6 py-3 font-semibold">Is Active</th>
                 <th className="px-6 py-3 text-right font-semibold">Actions</th>
               </tr>
             </thead>
             <tbody>
               {isLoading && (
                 <tr>
-                  <td colSpan={7} className="px-6 py-10 text-center text-slate-500">
+                  <td colSpan={8} className="px-6 py-10 text-center text-slate-500">
                     Loading inventory…
                   </td>
                 </tr>
               )}
               {isError && (
                 <tr>
-                  <td colSpan={7} className="px-6 py-10 text-center text-red-500">
+                  <td colSpan={8} className="px-6 py-10 text-center text-red-500">
                     {error?.message || 'Failed to load inventory'}
                   </td>
                 </tr>
               )}
               {!isLoading && !isError && filtered.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-6 py-10 text-center text-slate-500">
+                  <td colSpan={8} className="px-6 py-10 text-center text-slate-500">
                     No inventory items found
                   </td>
                 </tr>
               )}
               {!isLoading &&
                 !isError &&
-                filtered.map((item, index) => (
+                filtered.map((item, index) => {
+                  const statusUpdating =
+                    isStatusPending && statusVariables?.id === item.id
+                  return (
                   <tr
                     key={item.id}
                     onClick={() => navigate(`/inventory/${item.id}`)}
@@ -210,6 +217,25 @@ export default function Inventory() {
                       >
                         {item.status}
                       </span>
+                    </td>
+                    <td
+                      className="px-6 py-3.5"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <label
+                        className={`inline-flex items-center ${statusUpdating ? 'cursor-wait opacity-60' : 'cursor-pointer'}`}
+                      >
+                        <input
+                          type="checkbox"
+                          className="peer sr-only"
+                          checked={item.isActive}
+                          disabled={statusUpdating}
+                          onChange={(e) =>
+                            updateStatus({ id: item.id, isActive: e.target.checked })
+                          }
+                        />
+                        <span className="relative h-6 w-11 rounded-full bg-slate-300 transition peer-checked:bg-emerald-500 after:absolute after:left-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:transition peer-checked:after:translate-x-5" />
+                      </label>
                     </td>
                     <td
                       className="px-6 py-3.5 text-right"
@@ -240,7 +266,8 @@ export default function Inventory() {
                       </div>
                     </td>
                   </tr>
-                ))}
+                  )
+                })}
             </tbody>
           </table>
         </div>

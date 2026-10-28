@@ -31,3 +31,9 @@ export const updateUser = async ({ id, ...payload }) => {
   const { data } = await api.put(`/users/${id}`, payload)
   return data.data.user ?? data.data
 }
+
+export const updateUserStatus = async ({ id, isActive }) => {
+  const path = isActive ? `/users/${id}/activate` : `/users/${id}/deactivate`
+  const { data } = await api.patch(path)
+  return data.data.user ?? data.data
+}

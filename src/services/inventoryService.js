@@ -84,6 +84,11 @@ export const updateInventoryItem = async ({ id, formData }) => {
   return data.data
 }
 
+export const updateInventoryItemStatus = async ({ id, isActive }) => {
+  const { data } = await api.patch(`/inventory-items/${id}`, { isActive })
+  return data.data
+}
+
 export const createStockMovement = async ({ id, payload }) => {
   const { data } = await api.post(`/inventory-items/${id}/stock-movement`, payload)
   return data.data

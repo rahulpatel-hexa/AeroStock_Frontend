@@ -1,6 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
-import { getUsersPage, getUser, createUser, updateUser } from '../services/userService'
+import {
+  getUsersPage,
+  getUser,
+  createUser,
+  updateUser,
+  updateUserStatus,
+} from '../services/userService'
 
 export const useUsersPage = (params = {}) =>
   useQuery({
@@ -36,6 +42,19 @@ export const useUpdateUser = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] })
       toast.success('User updated')
+    },
+    onError: (error) => toast.error(error.message),
+  })
+}
+
+export const useUpdateUserStatus = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: updateUserStatus,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] })
+      toast.success('User status updated')
     },
     onError: (error) => toast.error(error.message),
   })
