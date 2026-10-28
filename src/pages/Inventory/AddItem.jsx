@@ -102,7 +102,7 @@ export default function AddItem() {
         </div>
 
         <div className="grid grid-cols-1 gap-x-6 gap-y-5 md:grid-cols-3">
-          <FormField label="Description" required error={errors.description}>
+          <FormField label="Item Name" required error={errors.description}>
             <input
               placeholder="Aircraft Alternator"
               className={inputClass(errors.description)}

@@ -8,7 +8,7 @@ const price = z
 export const inventorySchema = z
   .object({
     trackingType: z.enum(['bulk', 'serialized']),
-    description: z.string().trim().min(1, 'Description is required').max(100, 'Max 100 characters'),
+    description: z.string().trim().min(1, 'Item Name is required').max(100, 'Max 100 characters'),
     category: z.string().min(1, 'Select a category'),
     subCategory: z.string().optional(),
     manufacturer: z.string().optional(),
