@@ -5,6 +5,7 @@ import {
   updateInventoryItem,
   createStockMovement,
   getStockMovements,
+  getItemStockMovements,
   getInventoryItems,
   getInventoryItem,
 } from '../services/inventoryService'
@@ -19,6 +20,13 @@ export const useStockMovements = (params = {}) =>
   useQuery({
     queryKey: ['stock-movements', params],
     queryFn: () => getStockMovements(params),
+  })
+
+export const useItemStockMovements = (id, params = {}) =>
+  useQuery({
+    queryKey: ['inventory', id, 'stock-movements', params],
+    queryFn: () => getItemStockMovements(id, params),
+    enabled: !!id,
   })
 
 export const useInventoryItem = (id) =>
@@ -61,6 +69,7 @@ export const useCreateStockMovement = () => {
     mutationFn: createStockMovement,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['inventory'] })
+      queryClient.invalidateQueries({ queryKey: ['stock-movements'] })
       toast.success('Stock transaction recorded')
     },
     onError: (error) => toast.error(error.message),

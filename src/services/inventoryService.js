@@ -98,3 +98,13 @@ export const getStockMovements = async (params = {}) => {
     pagination: data.data.pagination ?? {},
   }
 }
+
+export const getItemStockMovements = async (id, params = {}) => {
+  const { data } = await api.get(`/inventory-items/${id}/stock-movements`, {
+    params: { page: 1, limit: 10, ...params },
+  })
+  return {
+    items: data.data.items ?? [],
+    pagination: data.data.pagination ?? {},
+  }
+}
