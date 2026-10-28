@@ -164,8 +164,8 @@ export default function Inventory() {
                 <th className="px-6 py-3 font-semibold">Item Name</th>
                 <th className="px-6 py-3 font-semibold">Part Number</th>
                 <th className="px-6 py-3 font-semibold">Quantity</th>
+                <th className="px-6 py-3 font-semibold">Stock Status</th>
                 <th className="px-6 py-3 font-semibold">Status</th>
-                <th className="px-6 py-3 font-semibold">Is Active</th>
                 <th className="px-6 py-3 text-right font-semibold">Actions</th>
               </tr>
             </thead>
