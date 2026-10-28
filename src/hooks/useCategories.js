@@ -6,11 +6,13 @@ import {
   getAllCategories,
   createCategory,
   updateCategory,
+  updateCategoryStatus,
   deleteCategory,
   getSubCategories,
   getAllSubCategories,
   createSubCategory,
   updateSubCategory,
+  updateSubCategoryStatus,
   deleteSubCategory,
 } from '../services/categoryService'
 
@@ -58,6 +60,9 @@ export const useCreateCategory = () =>
 export const useUpdateCategory = () =>
   useCrudMutation(updateCategory, ['categories'], 'Category updated')
 
+export const useUpdateCategoryStatus = () =>
+  useCrudMutation(updateCategoryStatus, ['categories'], 'Category status updated')
+
 export const useDeleteCategory = () =>
   useCrudMutation(deleteCategory, ['categories'], 'Category deleted')
 
@@ -81,6 +86,9 @@ export const useCreateSubCategory = () =>
 
 export const useUpdateSubCategory = () =>
   useCrudMutation(updateSubCategory, ['subcategories'], 'Subcategory updated')
+
+export const useUpdateSubCategoryStatus = () =>
+  useCrudMutation(updateSubCategoryStatus, ['subcategories'], 'Subcategory status updated')
 
 export const useDeleteSubCategory = () =>
   useCrudMutation(deleteSubCategory, ['subcategories'], 'Subcategory deleted')

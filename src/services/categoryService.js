@@ -42,6 +42,14 @@ export const updateCategory = async ({ id, ...payload }) => {
   return data.data.category
 }
 
+export const updateCategoryStatus = async ({ id, isActive }) => {
+  const path = isActive
+    ? `/categories/${id}/activate`
+    : `/categories/${id}/deactivate`
+  const { data } = await api.patch(path)
+  return data.data.category ?? data.data
+}
+
 export const deleteCategory = async (id) => {
   const { data } = await api.delete(`/categories/${id}`)
   return data.data
@@ -76,6 +84,14 @@ export const createSubCategory = async ({ categoryId, ...payload }) => {
 export const updateSubCategory = async ({ id, ...payload }) => {
   const { data } = await api.put(`/subcategories/${id}`, payload)
   return data.data.category
+}
+
+export const updateSubCategoryStatus = async ({ id, isActive }) => {
+  const path = isActive
+    ? `/subcategories/${id}/activate`
+    : `/subcategories/${id}/deactivate`
+  const { data } = await api.patch(path)
+  return data.data.category ?? data.data
 }
 
 export const deleteSubCategory = async (id) => {

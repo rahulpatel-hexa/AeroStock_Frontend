@@ -6,6 +6,7 @@ import {
   useCategoriesPage,
   useCreateCategory,
   useUpdateCategory,
+  useUpdateCategoryStatus,
   useDeleteCategory,
 } from '../../hooks/useCategories'
 import { getAllSubCategories } from '../../services/categoryService'
@@ -56,6 +57,11 @@ export default function Categories() {
   const createMutation = useCreateCategory()
   const updateMutation = useUpdateCategory()
   const deleteMutation = useDeleteCategory()
+  const {
+    mutate: updateStatus,
+    isPending: isStatusPending,
+    variables: statusVariables,
+  } = useUpdateCategoryStatus()
 
   const [formModal, setFormModal] = useState(null) // { mode: 'add' | 'edit', item }
   const [deleteItem, setDeleteItem] = useState(null)
@@ -109,13 +115,14 @@ export default function Categories() {
                 <th className="w-14 pl-6 pr-2 py-3 font-semibold">SN</th>
                 <th className="pl-2 pr-4 py-3 font-semibold">Category</th>
                 <th className="px-6 py-3 font-semibold">Subcategories</th>
+                <th className="px-6 py-3 font-semibold">Status</th>
                 <th className="px-6 py-3 text-right font-semibold">Actions</th>
               </tr>
             </thead>
             <tbody>
               {isLoading && (
                 <tr>
-                  <td colSpan={4} className="px-6 py-10 text-center text-slate-500">
+                  <td colSpan={5} className="px-6 py-10 text-center text-slate-500">
                     Loading...
                   </td>
                 </tr>
@@ -123,7 +130,7 @@ export default function Categories() {
 
               {isError && (
                 <tr>
-                  <td colSpan={4} className="px-6 py-10 text-center text-red-500">
+                  <td colSpan={5} className="px-6 py-10 text-center text-red-500">
                     {error.message}
                   </td>
                 </tr>
@@ -131,7 +138,7 @@ export default function Categories() {
 
               {!isLoading && !isError && categories.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="px-6 py-10 text-center text-slate-500">
+                  <td colSpan={5} className="px-6 py-10 text-center text-slate-500">
                     No categories found
                   </td>
                 </tr>
@@ -141,6 +148,8 @@ export default function Categories() {
                 !isError &&
                 categories.map((cat, index) => {
                   const count = resolveSubcategoryCount(cat, subcategoryQueries[index])
+                  const statusUpdating =
+                    isStatusPending && statusVariables?.id === cat.id
                   return (
                   <tr
                     key={cat.id}
@@ -153,6 +162,25 @@ export default function Categories() {
                     <td className="pl-2 pr-4 py-3.5 font-semibold text-slate-800">{cat.name}</td>
                     <td className="px-6 py-3.5 text-slate-600">
                       {count == null ? '—' : count}
+                    </td>
+                    <td
+                      className="px-6 py-3.5"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <label
+                        className={`inline-flex items-center ${statusUpdating ? 'cursor-wait opacity-60' : 'cursor-pointer'}`}
+                      >
+                        <input
+                          type="checkbox"
+                          className="peer sr-only"
+                          checked={!!cat.isActive}
+                          disabled={statusUpdating}
+                          onChange={(e) =>
+                            updateStatus({ id: cat.id, isActive: e.target.checked })
+                          }
+                        />
+                        <span className="relative h-6 w-11 rounded-full bg-slate-300 transition peer-checked:bg-emerald-500 after:absolute after:left-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:transition peer-checked:after:translate-x-5" />
+                      </label>
                     </td>
                     <td className="px-6 py-3.5 text-right">
                       <div className="flex items-center justify-end gap-8">
