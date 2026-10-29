@@ -9,6 +9,7 @@ import LogStock from './pages/Inventory/LogStock'
 import EditItem from './pages/Inventory/EditItem'
 import ViewItem from './pages/Inventory/ViewItem'
 import Inventory from './pages/Inventory'
+import UploadCsv from './pages/Inventory/UploadCsv'
 import StockHistory from './pages/StockHistory'
 import Dashboard from './pages/Dashboard'
 import Reports from './pages/Reports'
@@ -72,6 +73,7 @@ export default function App() {
         <Route path="/inventory" element={<Inventory />} />
         <Route path="/inventory/new" element={<AddItem />} />
         <Route path="/inventory/log-stock" element={<LogStock />} />
+        <Route path="/inventory/upload-csv" element={<UploadCsv />} />
         <Route path="/inventory/:id/edit" element={<EditItem />} />
         <Route path="/inventory/:id" element={<ViewItem />} />
 

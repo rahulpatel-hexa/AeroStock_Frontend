@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { ChevronLeft } from 'lucide-react'
 import { useCreateStockMovement, useInventoryItems } from '../../hooks/useInventory'
 import { inputClass } from '../../utils/helpers'
+import { ArrowLeft } from 'lucide-react'
 
 const todayIso = () => new Date().toISOString().slice(0, 10)
 
@@ -76,6 +77,12 @@ export default function LogStock() {
 
   return (
     <div>
+      <Link
+        to="/inventory"
+        className="mb-4 inline-flex items-center gap-1 text-sm font-semibold text-[#6c5ce7]"
+      >
+        <ArrowLeft size={16} /> Back to Inventory
+      </Link>
       <div className="mb-6 flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-800">Log Stock</h1>
@@ -116,9 +123,8 @@ export default function LogStock() {
               key={type.value}
               type="button"
               onClick={() => setMovementType(type.value)}
-              className={`rounded-lg border px-4 py-3 text-sm font-semibold ${
-                movementType === type.value ? type.activeClass : 'border-slate-200 text-slate-700'
-              }`}
+              className={`rounded-lg border px-4 py-3 text-sm font-semibold ${movementType === type.value ? type.activeClass : 'border-slate-200 text-slate-700'
+                }`}
             >
               {type.label}
             </button>

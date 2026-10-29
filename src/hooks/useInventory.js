@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import {
   createInventoryItem,
+  importInventoryItems,
   updateInventoryItem,
   updateInventoryItemStatus,
   createStockMovement,
@@ -45,6 +46,19 @@ export const useCreateInventoryItem = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['inventory'] })
       toast.success('Item added successfully')
+    },
+    onError: (error) => toast.error(error.message),
+  })
+}
+
+export const useImportInventoryItems = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: importInventoryItems,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['inventory'] })
+      toast.success('Inventory imported successfully')
     },
     onError: (error) => toast.error(error.message),
   })

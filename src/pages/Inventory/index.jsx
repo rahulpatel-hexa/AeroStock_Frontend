@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, ChevronLeft, ChevronRight, Eye, Pencil, PackagePlus, MoreHorizontal } from 'lucide-react'
+import { Search, ChevronLeft, ChevronRight, Eye, Pencil, PackagePlus, MoreHorizontal, Upload  } from 'lucide-react'
 import { useInventoryItems, useUpdateInventoryItemStatus } from '../../hooks/useInventory'
 
 const PAGE_SIZE = 10
@@ -115,13 +115,6 @@ export default function Inventory() {
           />
         </div>
         <div className="flex shrink-0 gap-2">
-          <button
-            type="button"
-            onClick={() => navigate('/inventory/new')}
-            className="rounded-xl bg-[#6c5ce7] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#5b4bd6]"
-          >
-            + Add Item
-          </button>
           {/* <button
             type="button"
             onClick={() => navigate('/inventory/log-stock')}
@@ -129,6 +122,20 @@ export default function Inventory() {
           >
             Log Stock
           </button> */}
+          <button
+            type="button"
+            onClick={() => navigate('/inventory/upload-csv')}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+          >
+            <Upload className="size-4" /> Upload CSV
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate('/inventory/new')}
+            className="rounded-xl bg-[#6c5ce7] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#5b4bd6]"
+          >
+            + Add Item
+          </button>
         </div>
       </div>
 
@@ -197,75 +204,75 @@ export default function Inventory() {
                   const statusUpdating =
                     isStatusPending && statusVariables?.id === item.id
                   return (
-                  <tr
-                    key={item.id}
-                    onClick={() => navigate(`/inventory/${item.id}`)}
-                    className="cursor-pointer border-b border-slate-50 last:border-0 hover:bg-slate-50/80"
-                  >
-                    <td className="w-14 pl-6 pr-2 py-3.5 text-slate-600">
-                      {(currentPage - 1) * PAGE_SIZE + index + 1}
-                    </td>
-                    <td className="pl-2 pr-4 py-3.5 font-semibold text-slate-800">
-                      {item.inventoryCode || item.id}
-                    </td>
-                    <td className="px-6 py-3.5 text-slate-700">{item.description}</td>
-                    <td className="px-6 py-3.5 text-slate-600">{item.partNumber}</td>
-                    <td className="px-6 py-3.5 text-slate-700">{item.quantity}</td>
-                    <td className="px-6 py-3.5">
-                      <span
-                        className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${STATUS_BADGE[item.status]}`}
-                      >
-                        {item.status}
-                      </span>
-                    </td>
-                    <td
-                      className="px-6 py-3.5"
-                      onClick={(e) => e.stopPropagation()}
+                    <tr
+                      key={item.id}
+                      onClick={() => navigate(`/inventory/${item.id}`)}
+                      className="cursor-pointer border-b border-slate-50 last:border-0 hover:bg-slate-50/80"
                     >
-                      <label
-                        className={`inline-flex items-center ${statusUpdating ? 'cursor-wait opacity-60' : 'cursor-pointer'}`}
+                      <td className="w-14 pl-6 pr-2 py-3.5 text-slate-600">
+                        {(currentPage - 1) * PAGE_SIZE + index + 1}
+                      </td>
+                      <td className="pl-2 pr-4 py-3.5 font-semibold text-slate-800">
+                        {item.inventoryCode || item.id}
+                      </td>
+                      <td className="px-6 py-3.5 text-slate-700">{item.description}</td>
+                      <td className="px-6 py-3.5 text-slate-600">{item.partNumber}</td>
+                      <td className="px-6 py-3.5 text-slate-700">{item.quantity}</td>
+                      <td className="px-6 py-3.5">
+                        <span
+                          className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${STATUS_BADGE[item.status]}`}
+                        >
+                          {item.status}
+                        </span>
+                      </td>
+                      <td
+                        className="px-6 py-3.5"
+                        onClick={(e) => e.stopPropagation()}
                       >
-                        <input
-                          type="checkbox"
-                          className="peer sr-only"
-                          checked={item.isActive}
-                          disabled={statusUpdating}
-                          onChange={(e) =>
-                            updateStatus({ id: item.id, isActive: e.target.checked })
-                          }
-                        />
-                        <span className="relative h-6 w-11 rounded-full bg-slate-300 transition peer-checked:bg-emerald-500 after:absolute after:left-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:transition peer-checked:after:translate-x-5" />
-                      </label>
-                    </td>
-                    <td
-                      className="px-6 py-3.5 text-right"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <div className="flex items-center justify-end gap-5">
-                        <button
-                          type="button"
-                          onClick={() => navigate(`/inventory/${item.id}/edit`)}
-                          className="flex items-center gap-1.5 text-sm font-semibold text-slate-500 hover:text-[#6c5ce7]"
+                        <label
+                          className={`inline-flex items-center ${statusUpdating ? 'cursor-wait opacity-60' : 'cursor-pointer'}`}
                         >
-                          <Pencil size={15} /> Edit
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => navigate(`/inventory/${item.id}`)}
-                          className="flex items-center gap-1.5 text-sm font-semibold text-[#6c5ce7] hover:text-[#5a4bd1]"
-                        >
-                          <Eye size={15} /> View
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => navigate(`/inventory/log-stock?itemId=${item.id}`)}
-                          className="flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-                        >
-                          <PackagePlus size={14} /> Log Stock
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
+                          <input
+                            type="checkbox"
+                            className="peer sr-only"
+                            checked={item.isActive}
+                            disabled={statusUpdating}
+                            onChange={(e) =>
+                              updateStatus({ id: item.id, isActive: e.target.checked })
+                            }
+                          />
+                          <span className="relative h-6 w-11 rounded-full bg-slate-300 transition peer-checked:bg-emerald-500 after:absolute after:left-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:transition peer-checked:after:translate-x-5" />
+                        </label>
+                      </td>
+                      <td
+                        className="px-6 py-3.5 text-right"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <div className="flex items-center justify-end gap-5">
+                          <button
+                            type="button"
+                            onClick={() => navigate(`/inventory/${item.id}/edit`)}
+                            className="flex items-center gap-1.5 text-sm font-semibold text-slate-500 hover:text-[#6c5ce7]"
+                          >
+                            <Pencil size={15} /> Edit
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => navigate(`/inventory/${item.id}`)}
+                            className="flex items-center gap-1.5 text-sm font-semibold text-[#6c5ce7] hover:text-[#5a4bd1]"
+                          >
+                            <Eye size={15} /> View
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => navigate(`/inventory/log-stock?itemId=${item.id}`)}
+                            className="flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                          >
+                            <PackagePlus size={14} /> Log Stock
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
                   )
                 })}
             </tbody>

@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, Link } from 'react-router-dom'
 import FormField from '../../components/common/FormField'
 import { inventorySchema } from '../../schemas/inventorySchema'
 import { CONDITIONS, CURRENCIES } from '../../utils/constants'
@@ -11,6 +11,7 @@ import { useManufacturers } from '../../hooks/useManufacturers'
 import { useLocations } from '../../hooks/useLocations'
 import { useInventoryItem, useUpdateInventoryItem } from '../../hooks/useInventory'
 import { buildInventoryFormData } from '../../services/inventoryService'
+import { ArrowLeft } from 'lucide-react'
 
 const emptyDefaults = {
   trackingType: 'bulk',
@@ -158,6 +159,12 @@ export default function EditItem() {
 
   return (
     <div>
+      <Link
+        to="/inventory"
+        className="mb-4 inline-flex items-center gap-1 text-sm font-semibold text-[#6c5ce7]"
+      >
+        <ArrowLeft size={16} /> Back to Inventory
+      </Link>
       <h1 className="text-2xl font-bold text-slate-800">Edit Inventory Item</h1>
       <p className="mb-6 mt-1 text-sm text-slate-500">
         Update details for {item.inventoryCode || `item #${item.id}`}

@@ -79,6 +79,13 @@ export const createInventoryItem = async (formData) => {
   return data.data
 }
 
+export const importInventoryItems = async (file) => {
+  const formData = new FormData()
+  formData.append('file', file)
+  const { data } = await api.post('/inventory-items/import', formData, multipartConfig)
+  return data.data ?? data
+}
+
 export const updateInventoryItem = async ({ id, formData }) => {
   const { data } = await api.put(`/inventory-items/${id}`, formData, multipartConfig)
   return data.data

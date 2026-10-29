@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { useNavigate, useParams, Link } from 'react-router-dom'
+import { ChevronLeft, ChevronRight, ArrowLeft  } from 'lucide-react'
 import { useInventoryItem, useItemStockMovements } from '../../hooks/useInventory'
 
 const PAGE_SIZE = 10
@@ -126,6 +126,12 @@ export default function ViewItem() {
 
   return (
     <div>
+        <Link
+        to="/inventory"
+        className="mb-4 inline-flex items-center gap-1 text-sm font-semibold text-[#6c5ce7]"
+      >
+        <ArrowLeft size={16} /> Back to Inventory
+      </Link>
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-800">
@@ -133,13 +139,13 @@ export default function ViewItem() {
           </h1>
           <p className="mt-1 text-sm text-slate-500">{dash(item.description)}</p>
         </div>
-        <button
+        {/* <button
           type="button"
           onClick={() => navigate('/inventory')}
           className="rounded-lg border border-slate-200 bg-white px-6 py-2.5 text-sm font-semibold text-slate-800 hover:bg-slate-50"
         >
           Back
-        </button>
+        </button> */}
       </div>
 
       <div className="rounded-2xl border border-slate-200 bg-white p-6">
