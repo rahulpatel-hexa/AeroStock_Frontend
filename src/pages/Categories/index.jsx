@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQueries } from '@tanstack/react-query'
-import { Pencil, Plus, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Pencil, Plus, Search, ChevronLeft, ChevronRight } from 'lucide-react'
 import {
   useCategoriesPage,
   useCreateCategory,
@@ -25,8 +25,17 @@ const resolveSubcategoryCount = (cat, query) => {
 
 export default function Categories() {
   const navigate = useNavigate()
+  const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
-  const { data, isLoading, isError, error } = useCategoriesPage({ page, limit: PAGE_SIZE })
+
+  const listParams = useMemo(() => {
+    const params = { page, limit: PAGE_SIZE }
+    const q = search.trim()
+    if (q) params.search = q
+    return params
+  }, [page, search])
+
+  const { data, isLoading, isError, error } = useCategoriesPage(listParams)
 
   const categories = data?.items ?? []
   const pagination = data?.pagination ?? {}
@@ -38,6 +47,11 @@ export default function Categories() {
   const currentPage = Math.min(page, totalPages)
   const showingFrom = categories.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1
   const showingTo = categories.length === 0 ? 0 : showingFrom + categories.length - 1
+
+  const handleSearch = (value) => {
+    setSearch(value)
+    setPage(1)
+  }
 
   const pageNumbers = Array.from({ length: Math.min(3, totalPages) }, (_, i) => {
     if (totalPages <= 3) return i + 1
@@ -91,13 +105,26 @@ export default function Categories() {
         </p>
       </div>
 
-      <div className="mb-6 flex justify-end">
-        <button
-          onClick={() => navigate('/categories/new')}
-          className="rounded-lg bg-[#6c5ce7] px-6 py-3 text-sm font-semibold text-white hover:bg-[#5b4bd6]"
-        >
-          + Add Category
-        </button>
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="relative min-w-0 flex-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => handleSearch(e.target.value)}
+            placeholder="Search category name..."
+            className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-[#6c5ce7] focus:ring-2 focus:ring-[#6c5ce7]/20"
+          />
+        </div>
+        <div className="flex shrink-0 gap-2">
+          <button
+            type="button"
+            onClick={() => navigate('/categories/new')}
+            className="rounded-xl bg-[#6c5ce7] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#5b4bd6]"
+          >
+            + Add Category
+          </button>
+        </div>
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">

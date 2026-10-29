@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Pencil, Trash2 } from 'lucide-react'
+import { ArrowLeft, Pencil, Search, Trash2 } from 'lucide-react'
 import {
   useCategories,
   useSubCategories,
@@ -12,11 +12,20 @@ import ConfirmDialog from '../../components/common/ConfirmDialog'
 export default function SubCategories() {
   const { categoryId } = useParams()
   const navigate = useNavigate()
+  const [search, setSearch] = useState('')
 
   const { data: categories } = useCategories()
   const category = categories?.find((c) => String(c.id) === categoryId)
 
-  const { data: subCategories, isLoading, isError, error } = useSubCategories(categoryId)
+  const listParams = useMemo(() => {
+    const params = {}
+    const q = search.trim()
+    if (q) params.search = q
+    return params
+  }, [search])
+
+  const { data: subCategories, isLoading, isError, error } =
+    useSubCategories(categoryId, listParams)
 
   const deleteMutation = useDeleteSubCategory()
   const {
@@ -47,13 +56,26 @@ export default function SubCategories() {
         <p className="mt-1 text-sm text-slate-500">Manage subcategories of this category</p>
       </div>
 
-      <div className="mb-6 flex justify-end">
-        <button
-          onClick={() => navigate(`/categories/${categoryId}/subcategories/new`)}
-          className="rounded-lg bg-[#6c5ce7] px-6 py-3 text-sm font-semibold text-white hover:bg-[#5b4bd6]"
-        >
-          + Add Subcategory
-        </button>
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="relative min-w-0 flex-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search subcategory name..."
+            className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-[#6c5ce7] focus:ring-2 focus:ring-[#6c5ce7]/20"
+          />
+        </div>
+        <div className="flex shrink-0 gap-2">
+          <button
+            type="button"
+            onClick={() => navigate(`/categories/${categoryId}/subcategories/new`)}
+            className="rounded-xl bg-[#6c5ce7] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#5b4bd6]"
+          >
+            + Add Subcategory
+          </button>
+        </div>
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
