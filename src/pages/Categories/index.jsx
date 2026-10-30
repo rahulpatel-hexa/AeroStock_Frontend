@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQueries } from '@tanstack/react-query'
-import { Pencil, Plus, Search, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Search } from 'lucide-react'
 import {
   useCategoriesPage,
   useCreateCategory,
@@ -12,8 +12,9 @@ import {
 import { getAllSubCategories } from '../../services/categoryService'
 import NameFormModal from './NameFormModal'
 import ConfirmDialog from '../../components/common/ConfirmDialog'
-
-const PAGE_SIZE = 10
+import DataTable from '../../components/common/DataTable'
+import Pagination from '../../components/common/Pagination'
+import { getCategoryColumns } from './categoryColumns'
 
 const resolveSubcategoryCount = (cat, query) => {
   const fromItem =
@@ -27,13 +28,14 @@ export default function Categories() {
   const navigate = useNavigate()
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
 
   const listParams = useMemo(() => {
-    const params = { page, limit: PAGE_SIZE }
+    const params = { page, limit: pageSize }
     const q = search.trim()
     if (q) params.search = q
     return params
-  }, [page, search])
+  }, [page, pageSize, search])
 
   const { data, isLoading, isError, error } = useCategoriesPage(listParams)
 
@@ -42,14 +44,19 @@ export default function Categories() {
   const totalRecords = Number(pagination.total ?? categories.length)
   const totalPages = Math.max(
     1,
-    Number(pagination.totalPages ?? Math.ceil(totalRecords / PAGE_SIZE) ?? 1)
+    Number(pagination.totalPages ?? Math.ceil(totalRecords / pageSize) ?? 1)
   )
   const currentPage = Math.min(page, totalPages)
-  const showingFrom = categories.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1
+  const showingFrom = categories.length === 0 ? 0 : (currentPage - 1) * pageSize + 1
   const showingTo = categories.length === 0 ? 0 : showingFrom + categories.length - 1
 
   const handleSearch = (value) => {
     setSearch(value)
+    setPage(1)
+  }
+
+  const handlePageSizeChange = (size) => {
+    setPageSize(size)
     setPage(1)
   }
 
@@ -67,6 +74,12 @@ export default function Categories() {
       enabled: !!cat.id,
     })),
   })
+
+  // har row me subcategory count jod do, taaki column ko index na chahiye
+  const rows = categories.map((cat, index) => ({
+    ...cat,
+    subCount: resolveSubcategoryCount(cat, subcategoryQueries[index]),
+  }))
 
   const createMutation = useCreateCategory()
   const updateMutation = useUpdateCategory()
@@ -95,6 +108,19 @@ export default function Categories() {
       onSuccess: () => setDeleteItem(null),
     })
   }
+
+  const columns = useMemo(
+    () =>
+      getCategoryColumns({
+        currentPage,
+        pageSize,
+        navigate,
+        updateStatus,
+        isStatusPending,
+        statusVariables,
+      }),
+    [currentPage, pageSize, navigate, updateStatus, isStatusPending, statusVariables]
+  )
 
   return (
     <div>
@@ -128,157 +154,36 @@ export default function Categories() {
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
-        <div className="border-b border-slate-100 px-6 py-4">
+        <div className="border-b border-slate-100 px-4 py-4 sm:px-6">
           <h2 className="text-lg font-bold text-slate-800">Inventory Categories</h2>
           <p className="mt-1 text-xs text-slate-500">
             Click a category to manage its subcategories.
           </p>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[640px] text-left text-sm">
-            <thead>
-              <tr className="border-b border-slate-100 text-xs font-semibold uppercase tracking-wide text-slate-400">
-                <th className="w-14 pl-6 pr-2 py-3 font-semibold">SN</th>
-                <th className="pl-2 pr-4 py-3 font-semibold">Category</th>
-                <th className="px-6 py-3 font-semibold">Subcategories</th>
-                <th className="px-6 py-3 font-semibold">Status</th>
-                <th className="px-6 py-3 text-right font-semibold">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading && (
-                <tr>
-                  <td colSpan={5} className="px-6 py-10 text-center text-slate-500">
-                    Loading...
-                  </td>
-                </tr>
-              )}
+        <DataTable
+          columns={columns}
+          data={rows}
+          isLoading={isLoading}
+          isError={isError}
+          errorMessage={error?.message}
+          emptyText="No categories found"
+          minWidth={760}
+          onRowClick={(cat) => navigate(`/categories/${cat.id}`)}
+        />
 
-              {isError && (
-                <tr>
-                  <td colSpan={5} className="px-6 py-10 text-center text-red-500">
-                    {error.message}
-                  </td>
-                </tr>
-              )}
-
-              {!isLoading && !isError && categories.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="px-6 py-10 text-center text-slate-500">
-                    No categories found
-                  </td>
-                </tr>
-              )}
-
-              {!isLoading &&
-                !isError &&
-                categories.map((cat, index) => {
-                  const count = resolveSubcategoryCount(cat, subcategoryQueries[index])
-                  const statusUpdating =
-                    isStatusPending && statusVariables?.id === cat.id
-                  return (
-                  <tr
-                    key={cat.id}
-                    onClick={() => navigate(`/categories/${cat.id}`)}
-                    className="cursor-pointer border-b border-slate-50 last:border-0 hover:bg-slate-50/80"
-                  >
-                    <td className="w-14 pl-6 pr-2 py-3.5 text-slate-600">
-                      {(currentPage - 1) * PAGE_SIZE + index + 1}
-                    </td>
-                    <td className="pl-2 pr-4 py-3.5 font-semibold text-slate-800">{cat.name}</td>
-                    <td className="px-6 py-3.5 text-slate-600">
-                      {count == null ? '—' : count}
-                    </td>
-                    <td
-                      className="px-6 py-3.5"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <label
-                        className={`inline-flex items-center ${statusUpdating ? 'cursor-wait opacity-60' : 'cursor-pointer'}`}
-                      >
-                        <input
-                          type="checkbox"
-                          className="peer sr-only"
-                          checked={!!cat.isActive}
-                          disabled={statusUpdating}
-                          onChange={(e) =>
-                            updateStatus({ id: cat.id, isActive: e.target.checked })
-                          }
-                        />
-                        <span className="relative h-6 w-11 rounded-full bg-slate-300 transition peer-checked:bg-emerald-500 after:absolute after:left-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:transition peer-checked:after:translate-x-5" />
-                      </label>
-                    </td>
-                    <td className="px-6 py-3.5 text-right">
-                      <div className="flex items-center justify-end gap-8">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            navigate(`/categories/${cat.id}/subcategories/new`)
-                          }}
-                          className="flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-                        >
-                          <Plus size={14} /> Add subcategory
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            navigate(`/categories/${cat.id}/edit`)
-                          }}
-                          className="flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-[#6c5ce7]"
-                        >
-                          <Pencil size={14} /> Edit
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                  )
-                })}
-            </tbody>
-          </table>
-        </div>
-
-        <div className="flex flex-col gap-3 border-t border-slate-100 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm text-slate-500">
-            Showing {showingFrom}–{showingTo} of {totalRecords.toLocaleString()} items
-          </p>
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              disabled={currentPage <= 1 || isLoading}
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
-              aria-label="Previous page"
-            >
-              <ChevronLeft className="size-4" />
-            </button>
-            {pageNumbers.map((n) => (
-              <button
-                key={n}
-                type="button"
-                onClick={() => setPage(n)}
-                className={`min-w-8 rounded-lg px-2.5 py-1 text-sm font-medium ${
-                  currentPage === n
-                    ? 'bg-[#6c5ce7] text-white'
-                    : 'text-slate-600 hover:bg-slate-100'
-                }`}
-              >
-                {n}
-              </button>
-            ))}
-            <button
-              type="button"
-              disabled={currentPage >= totalPages || isLoading}
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
-              aria-label="Next page"
-            >
-              <ChevronRight className="size-4" />
-            </button>
-          </div>
-        </div>
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          showingFrom={showingFrom}
+          showingTo={showingTo}
+          totalRecords={totalRecords}
+          pageNumbers={pageNumbers}
+          isLoading={isLoading}
+          onPageChange={setPage}
+          pageSize={pageSize}
+          onPageSizeChange={handlePageSizeChange}
+        />
       </div>
 
       <NameFormModal
@@ -302,3 +207,309 @@ export default function Categories() {
     </div>
   )
 }
+
+
+// import { useMemo, useState } from 'react'
+// import { useNavigate } from 'react-router-dom'
+// import { useQueries } from '@tanstack/react-query'
+// import { Pencil, Plus, Search, ChevronLeft, ChevronRight } from 'lucide-react'
+// import {
+//   useCategoriesPage,
+//   useCreateCategory,
+//   useUpdateCategory,
+//   useUpdateCategoryStatus,
+//   useDeleteCategory,
+// } from '../../hooks/useCategories'
+// import { getAllSubCategories } from '../../services/categoryService'
+// import NameFormModal from './NameFormModal'
+// import ConfirmDialog from '../../components/common/ConfirmDialog'
+
+// const PAGE_SIZE = 10
+
+// const resolveSubcategoryCount = (cat, query) => {
+//   const fromItem =
+//     cat.subcategoryCount ?? cat._count?.children ?? cat.childrenCount
+//   if (fromItem != null) return Number(fromItem)
+//   if (query?.isLoading || query?.isPending) return null
+//   return Number(query?.data?.length ?? 0)
+// }
+
+// export default function Categories() {
+//   const navigate = useNavigate()
+//   const [search, setSearch] = useState('')
+//   const [page, setPage] = useState(1)
+
+//   const listParams = useMemo(() => {
+//     const params = { page, limit: PAGE_SIZE }
+//     const q = search.trim()
+//     if (q) params.search = q
+//     return params
+//   }, [page, search])
+
+//   const { data, isLoading, isError, error } = useCategoriesPage(listParams)
+
+//   const categories = data?.items ?? []
+//   const pagination = data?.pagination ?? {}
+//   const totalRecords = Number(pagination.total ?? categories.length)
+//   const totalPages = Math.max(
+//     1,
+//     Number(pagination.totalPages ?? Math.ceil(totalRecords / PAGE_SIZE) ?? 1)
+//   )
+//   const currentPage = Math.min(page, totalPages)
+//   const showingFrom = categories.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1
+//   const showingTo = categories.length === 0 ? 0 : showingFrom + categories.length - 1
+
+//   const handleSearch = (value) => {
+//     setSearch(value)
+//     setPage(1)
+//   }
+
+//   const pageNumbers = Array.from({ length: Math.min(3, totalPages) }, (_, i) => {
+//     if (totalPages <= 3) return i + 1
+//     if (currentPage <= 2) return i + 1
+//     if (currentPage >= totalPages - 1) return totalPages - 2 + i
+//     return currentPage - 1 + i
+//   })
+
+//   const subcategoryQueries = useQueries({
+//     queries: categories.map((cat) => ({
+//       queryKey: ['subcategories', 'all', cat.id],
+//       queryFn: () => getAllSubCategories(cat.id),
+//       enabled: !!cat.id,
+//     })),
+//   })
+
+//   const createMutation = useCreateCategory()
+//   const updateMutation = useUpdateCategory()
+//   const deleteMutation = useDeleteCategory()
+//   const {
+//     mutate: updateStatus,
+//     isPending: isStatusPending,
+//     variables: statusVariables,
+//   } = useUpdateCategoryStatus()
+
+//   const [formModal, setFormModal] = useState(null) // { mode: 'add' | 'edit', item }
+//   const [deleteItem, setDeleteItem] = useState(null)
+
+//   const handleSubmit = ({ name }) => {
+//     const options = { onSuccess: () => setFormModal(null) }
+
+//     if (formModal.mode === 'add') {
+//       createMutation.mutate({ name }, options)
+//     } else {
+//       updateMutation.mutate({ id: formModal.item.id, name }, options)
+//     }
+//   }
+
+//   const handleDelete = () => {
+//     deleteMutation.mutate(deleteItem.id, {
+//       onSuccess: () => setDeleteItem(null),
+//     })
+//   }
+
+//   return (
+//     <div>
+//       <div className="mb-6">
+//         <h1 className="text-2xl font-bold text-slate-800">Categories</h1>
+//         <p className="mt-1 text-sm text-slate-500">
+//           Manage categories and subcategories yourself
+//         </p>
+//       </div>
+
+//       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+//         <div className="relative min-w-0 flex-1">
+//           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+//           <input
+//             type="search"
+//             value={search}
+//             onChange={(e) => handleSearch(e.target.value)}
+//             placeholder="Search category name..."
+//             className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-[#6c5ce7] focus:ring-2 focus:ring-[#6c5ce7]/20"
+//           />
+//         </div>
+//         <div className="flex shrink-0 gap-2">
+//           <button
+//             type="button"
+//             onClick={() => navigate('/categories/new')}
+//             className="rounded-xl bg-[#6c5ce7] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#5b4bd6]"
+//           >
+//             + Add Category
+//           </button>
+//         </div>
+//       </div>
+
+//       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+//         <div className="border-b border-slate-100 px-6 py-4">
+//           <h2 className="text-lg font-bold text-slate-800">Inventory Categories</h2>
+//           <p className="mt-1 text-xs text-slate-500">
+//             Click a category to manage its subcategories.
+//           </p>
+//         </div>
+
+//         <div className="overflow-x-auto">
+//           <table className="w-full min-w-[640px] text-left text-sm">
+//             <thead>
+//               <tr className="border-b border-slate-100 text-xs font-semibold uppercase tracking-wide text-slate-400">
+//                 <th className="w-14 pl-6 pr-2 py-3 font-semibold">SN</th>
+//                 <th className="pl-2 pr-4 py-3 font-semibold">Category</th>
+//                 <th className="px-6 py-3 font-semibold">Subcategories</th>
+//                 <th className="px-6 py-3 font-semibold">Status</th>
+//                 <th className="px-6 py-3 text-right font-semibold">Actions</th>
+//               </tr>
+//             </thead>
+//             <tbody>
+//               {isLoading && (
+//                 <tr>
+//                   <td colSpan={5} className="px-6 py-10 text-center text-slate-500">
+//                     Loading...
+//                   </td>
+//                 </tr>
+//               )}
+
+//               {isError && (
+//                 <tr>
+//                   <td colSpan={5} className="px-6 py-10 text-center text-red-500">
+//                     {error.message}
+//                   </td>
+//                 </tr>
+//               )}
+
+//               {!isLoading && !isError && categories.length === 0 && (
+//                 <tr>
+//                   <td colSpan={5} className="px-6 py-10 text-center text-slate-500">
+//                     No categories found
+//                   </td>
+//                 </tr>
+//               )}
+
+//               {!isLoading &&
+//                 !isError &&
+//                 categories.map((cat, index) => {
+//                   const count = resolveSubcategoryCount(cat, subcategoryQueries[index])
+//                   const statusUpdating =
+//                     isStatusPending && statusVariables?.id === cat.id
+//                   return (
+//                   <tr
+//                     key={cat.id}
+//                     onClick={() => navigate(`/categories/${cat.id}`)}
+//                     className="cursor-pointer border-b border-slate-50 last:border-0 hover:bg-slate-50/80"
+//                   >
+//                     <td className="w-14 pl-6 pr-2 py-3.5 text-slate-600">
+//                       {(currentPage - 1) * PAGE_SIZE + index + 1}
+//                     </td>
+//                     <td className="pl-2 pr-4 py-3.5 font-semibold text-slate-800">{cat.name}</td>
+//                     <td className="px-6 py-3.5 text-slate-600">
+//                       {count == null ? '—' : count}
+//                     </td>
+//                     <td
+//                       className="px-6 py-3.5"
+//                       onClick={(e) => e.stopPropagation()}
+//                     >
+//                       <label
+//                         className={`inline-flex items-center ${statusUpdating ? 'cursor-wait opacity-60' : 'cursor-pointer'}`}
+//                       >
+//                         <input
+//                           type="checkbox"
+//                           className="peer sr-only"
+//                           checked={!!cat.isActive}
+//                           disabled={statusUpdating}
+//                           onChange={(e) =>
+//                             updateStatus({ id: cat.id, isActive: e.target.checked })
+//                           }
+//                         />
+//                         <span className="relative h-6 w-11 rounded-full bg-slate-300 transition peer-checked:bg-emerald-500 after:absolute after:left-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:transition peer-checked:after:translate-x-5" />
+//                       </label>
+//                     </td>
+//                     <td className="px-6 py-3.5 text-right">
+//                       <div className="flex items-center justify-end gap-8">
+//                         <button
+//                           type="button"
+//                           onClick={(e) => {
+//                             e.stopPropagation()
+//                             navigate(`/categories/${cat.id}/subcategories/new`)
+//                           }}
+//                           className="flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+//                         >
+//                           <Plus size={14} /> Add subcategory
+//                         </button>
+//                         <button
+//                           type="button"
+//                           onClick={(e) => {
+//                             e.stopPropagation()
+//                             navigate(`/categories/${cat.id}/edit`)
+//                           }}
+//                           className="flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-[#6c5ce7]"
+//                         >
+//                           <Pencil size={14} /> Edit
+//                         </button>
+//                       </div>
+//                     </td>
+//                   </tr>
+//                   )
+//                 })}
+//             </tbody>
+//           </table>
+//         </div>
+
+//         <div className="flex flex-col gap-3 border-t border-slate-100 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+//           <p className="text-sm text-slate-500">
+//             Showing {showingFrom}–{showingTo} of {totalRecords.toLocaleString()} items
+//           </p>
+//           <div className="flex items-center gap-1">
+//             <button
+//               type="button"
+//               disabled={currentPage <= 1 || isLoading}
+//               onClick={() => setPage((p) => Math.max(1, p - 1))}
+//               className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+//               aria-label="Previous page"
+//             >
+//               <ChevronLeft className="size-4" />
+//             </button>
+//             {pageNumbers.map((n) => (
+//               <button
+//                 key={n}
+//                 type="button"
+//                 onClick={() => setPage(n)}
+//                 className={`min-w-8 rounded-lg px-2.5 py-1 text-sm font-medium ${
+//                   currentPage === n
+//                     ? 'bg-[#6c5ce7] text-white'
+//                     : 'text-slate-600 hover:bg-slate-100'
+//                 }`}
+//               >
+//                 {n}
+//               </button>
+//             ))}
+//             <button
+//               type="button"
+//               disabled={currentPage >= totalPages || isLoading}
+//               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+//               className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+//               aria-label="Next page"
+//             >
+//               <ChevronRight className="size-4" />
+//             </button>
+//           </div>
+//         </div>
+//       </div>
+
+//       <NameFormModal
+//         open={!!formModal}
+//         title={formModal?.mode === 'edit' ? 'Edit Category' : 'Add Category'}
+//         label="Category Name"
+//         initialName={formModal?.item?.name ?? ''}
+//         isPending={createMutation.isPending || updateMutation.isPending}
+//         onClose={() => setFormModal(null)}
+//         onSubmit={handleSubmit}
+//       />
+
+//       <ConfirmDialog
+//         open={!!deleteItem}
+//         title="Delete Category"
+//         message={`Are you sure you want to delete "${deleteItem?.name}"?`}
+//         isPending={deleteMutation.isPending}
+//         onConfirm={handleDelete}
+//         onClose={() => setDeleteItem(null)}
+//       />
+//     </div>
+//   )
+// }
