@@ -1,7 +1,7 @@
 import { useMutation } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { loginApi, updateMeApi } from '../services/authService'
+import { loginApi, updateMeApi, changePasswordApi } from '../services/authService'
 import { useAuthStore } from '../store/authStore'
 
 export const useLogin = () => {
@@ -31,6 +31,19 @@ export const useUpdateProfile = () => {
       toast.success('Profile updated successfully')
     },
     onError: (error) => {
+      toast.error(error.message)
+    },
+  })
+}
+
+export const useChangePassword = () => {
+  return useMutation({
+    mutationFn: changePasswordApi,
+    onSuccess: () => {
+      toast.success('Password updated successfully')
+    },
+    onError: (error) => {
+      console.log('error', error)
       toast.error(error.message)
     },
   })

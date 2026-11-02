@@ -2,8 +2,8 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Eye, EyeOff } from 'lucide-react'
-import toast from 'react-hot-toast'
 import FormField from '../../components/common/FormField'
+import { useChangePassword } from '../../hooks/useAuth'
 import { passwordSchema } from '../../schemas/settingsSchema'
 import { inputClass } from '../../utils/helpers'
 
@@ -31,6 +31,7 @@ export default function PasswordTab() {
   const [showCurrent, setShowCurrent] = useState(false)
   const [showNew, setShowNew] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
+  const { mutate: changePassword, isPending } = useChangePassword()
 
   const {
     register,
@@ -46,9 +47,10 @@ export default function PasswordTab() {
     },
   })
 
-  const onSubmit = () => {
-    toast.success('Password updated')
-    reset()
+  const onSubmit = (values) => {
+    changePassword(values, {
+      onSuccess: () => reset(),
+    })
   }
 
   return (
@@ -97,9 +99,10 @@ export default function PasswordTab() {
       <div className="mt-8">
         <button
           type="submit"
-          className="rounded-xl bg-[#6c5ce7] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#5b4bd6]"
+          disabled={isPending}
+          className="rounded-xl bg-[#6c5ce7] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#5b4bd6] disabled:cursor-not-allowed disabled:opacity-60"
         >
-          Save
+          {isPending ? 'Saving...' : 'Save'}
         </button>
       </div>
     </form>
