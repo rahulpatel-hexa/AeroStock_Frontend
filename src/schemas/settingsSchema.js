@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 export const profileSchema = z.object({
-  name: z.string().trim().min(2, 'Minimum 2 characters').max(100, 'Maximum 100 characters'),
+  name: z.string().trim().min(2, 'Minimum 2 characters').max(150, 'Maximum 150 characters'),
   email: z.string().trim().email('Enter a valid email'),
 })
 

@@ -1,20 +1,15 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import toast from 'react-hot-toast'
 import FormField from '../../components/common/FormField'
-import ConfirmDialog from '../../components/common/ConfirmDialog'
 import { useAuthStore } from '../../store/authStore'
+import { useUpdateProfile } from '../../hooks/useAuth'
 import { profileSchema } from '../../schemas/settingsSchema'
 import { inputClass } from '../../utils/helpers'
 
 export default function ProfileTab() {
   const user = useAuthStore((s) => s.user)
-  const token = useAuthStore((s) => s.token)
-  const setAuth = useAuthStore((s) => s.setAuth)
-
-  const [fileName, setFileName] = useState('')
-  const [deleteOpen, setDeleteOpen] = useState(false)
+  const { mutate: updateProfile, isPending } = useUpdateProfile()
 
   const {
     register,
@@ -39,17 +34,7 @@ export default function ProfileTab() {
   }, [user, reset])
 
   const onSubmit = (values) => {
-    if (!user) return
-    setAuth({
-      user: { ...user, name: values.name, email: values.email },
-      token,
-    })
-    toast.success('Profile updated')
-  }
-
-  const handleDeleteConfirm = () => {
-    setDeleteOpen(false)
-    toast('Account deletion is not available yet')
+    updateProfile({ name: values.name })
   }
 
   return (
@@ -64,7 +49,7 @@ export default function ProfileTab() {
           Update your name and email address
         </p>
 
-        <div className="mb-5">
+        {/* <div className="mb-5">
           <p className="mb-1.5 text-xs font-semibold text-slate-500">Photo</p>
           <div className="flex flex-wrap items-center gap-3">
             <label className="cursor-pointer rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
@@ -83,7 +68,7 @@ export default function ProfileTab() {
               {fileName || 'No file chosen'}
             </span>
           </div>
-        </div>
+        </div> */}
 
         <div className="space-y-5">
           <FormField label="Name" required error={errors.name}>
@@ -98,7 +83,9 @@ export default function ProfileTab() {
             <input
               type="email"
               placeholder="you@example.com"
-              className={inputClass(errors.email)}
+              readOnly
+              aria-readonly="true"
+              className={`${inputClass(errors.email)} cursor-not-allowed read-only:border-slate-200 read-only:bg-slate-100 read-only:text-slate-400 read-only:focus:border-slate-200 read-only:focus:ring-0`}
               {...register('email')}
             />
           </FormField>
@@ -107,34 +94,13 @@ export default function ProfileTab() {
         <div className="mt-8">
           <button
             type="submit"
-            className="rounded-xl bg-[#6c5ce7] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#5b4bd6]"
+            disabled={isPending}
+            className="rounded-xl bg-[#6c5ce7] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#5b4bd6] disabled:cursor-not-allowed disabled:opacity-60"
           >
-            Save
+            {isPending ? 'Saving...' : 'Save'}
           </button>
         </div>
       </form>
-
-      <div className="mt-8 rounded-2xl border border-slate-200 bg-white p-6">
-        <h2 className="text-lg font-bold text-slate-800">Delete account</h2>
-        <p className="mb-6 mt-1 text-sm text-slate-500">
-          Delete your account and all of its resources
-        </p>
-        <button
-          type="button"
-          onClick={() => setDeleteOpen(true)}
-          className="rounded-xl bg-red-500 px-6 py-2.5 text-sm font-semibold text-white hover:bg-red-600"
-        >
-          Delete account
-        </button>
-      </div>
-
-      <ConfirmDialog
-        open={deleteOpen}
-        title="Delete account"
-        message="Delete your account and all of its resources? This action cannot be undone."
-        onConfirm={handleDeleteConfirm}
-        onClose={() => setDeleteOpen(false)}
-      />
     </div>
   )
 }

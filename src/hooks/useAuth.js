@@ -1,7 +1,7 @@
 import { useMutation } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { loginApi } from '../services/authService'
+import { loginApi, updateMeApi } from '../services/authService'
 import { useAuthStore } from '../store/authStore'
 
 export const useLogin = () => {
@@ -17,6 +17,21 @@ export const useLogin = () => {
     },
     onError: (error) => {
       toast.error(error.message) // api.js ne already clean message bana diya hai
+    },
+  })
+}
+
+export const useUpdateProfile = () => {
+  const setAuth = useAuthStore((s) => s.setAuth)
+
+  return useMutation({
+    mutationFn: updateMeApi,
+    onSuccess: (user) => {
+      setAuth({ user, token: useAuthStore.getState().token })
+      toast.success('Profile updated successfully')
+    },
+    onError: (error) => {
+      toast.error(error.message)
     },
   })
 }

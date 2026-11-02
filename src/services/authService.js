@@ -9,3 +9,8 @@ export const loginApi = async (credentials) => {
     user: data.data.user,
   }
 }
+
+export const updateMeApi = async ({ name }) => {
+  const { data } = await api.put('/auth/me', { name })
+  return data.data.user
+}
