@@ -9,6 +9,7 @@ import {
   updateCategoryStatus,
   deleteCategory,
   getSubCategories,
+  getSubCategoriesPage,
   getAllSubCategories,
   createSubCategory,
   updateSubCategory,
@@ -71,6 +72,13 @@ export const useSubCategories = (categoryId, params = {}) =>
   useQuery({
     queryKey: ['subcategories', categoryId, params],
     queryFn: () => getSubCategories(categoryId, params),
+    enabled: !!categoryId,
+  })
+
+export const useSubCategoriesPage = (categoryId, params = {}) =>
+  useQuery({
+    queryKey: ['subcategories', 'page', categoryId, params],
+    queryFn: () => getSubCategoriesPage(categoryId, params),
     enabled: !!categoryId,
   })
 

@@ -1,31 +1,65 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Pencil, Search, Trash2 } from 'lucide-react'
+import { ArrowLeft, Search } from 'lucide-react'
 import {
   useCategories,
-  useSubCategories,
+  useSubCategoriesPage,
   useUpdateSubCategoryStatus,
   useDeleteSubCategory,
 } from '../../hooks/useCategories'
 import ConfirmDialog from '../../components/common/ConfirmDialog'
+import DataTable from '../../components/common/DataTable'
+import Pagination from '../../components/common/Pagination'
+import { getSubCategoryColumns } from './subCategoryColumns'
 
 export default function SubCategories() {
   const { categoryId } = useParams()
   const navigate = useNavigate()
   const [search, setSearch] = useState('')
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
 
   const { data: categories } = useCategories()
   const category = categories?.find((c) => String(c.id) === categoryId)
 
   const listParams = useMemo(() => {
-    const params = {}
+    const params = { page, limit: pageSize }
     const q = search.trim()
     if (q) params.search = q
     return params
-  }, [search])
+  }, [page, pageSize, search])
 
-  const { data: subCategories, isLoading, isError, error } =
-    useSubCategories(categoryId, listParams)
+  const { data, isLoading, isError, error } = useSubCategoriesPage(categoryId, listParams)
+
+  const subCategories = data?.items ?? []
+  const pagination = data?.pagination ?? {}
+  const totalRecords = Number(pagination.total ?? subCategories.length)
+  const totalPages = Math.max(
+    1,
+    Number(pagination.totalPages ?? Math.ceil(totalRecords / pageSize) ?? 1)
+  )
+  const currentPage = Math.min(page, totalPages)
+  const showingFrom =
+    subCategories.length === 0 ? 0 : (currentPage - 1) * pageSize + 1
+  const showingTo =
+    subCategories.length === 0 ? 0 : showingFrom + subCategories.length - 1
+
+  const handleSearch = (value) => {
+    setSearch(value)
+    setPage(1)
+  }
+
+  const handlePageSizeChange = (size) => {
+    setPageSize(size)
+    setPage(1)
+  }
+
+  const pageNumbers = Array.from({ length: Math.min(3, totalPages) }, (_, i) => {
+    if (totalPages <= 3) return i + 1
+    if (currentPage <= 2) return i + 1
+    if (currentPage >= totalPages - 1) return totalPages - 2 + i
+    return currentPage - 1 + i
+  })
 
   const deleteMutation = useDeleteSubCategory()
   const {
@@ -41,6 +75,20 @@ export default function SubCategories() {
       onSuccess: () => setDeleteItem(null),
     })
   }
+
+  const columns = useMemo(
+    () =>
+      getSubCategoryColumns({
+        categoryId,
+        currentPage,
+        pageSize,
+        navigate,
+        updateStatus,
+        isStatusPending,
+        statusVariables,
+      }),
+    [categoryId, currentPage, pageSize, navigate, updateStatus, isStatusPending, statusVariables]
+  )
 
   return (
     <div>
@@ -62,7 +110,7 @@ export default function SubCategories() {
           <input
             type="search"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => handleSearch(e.target.value)}
             placeholder="Search subcategory name..."
             className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-[#6c5ce7] focus:ring-2 focus:ring-[#6c5ce7]/20"
           />
@@ -83,97 +131,28 @@ export default function SubCategories() {
           <h2 className="text-lg font-bold text-slate-800">Subcategories</h2>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[480px] text-left text-sm">
-            <thead>
-              <tr className="border-b border-slate-100 text-xs font-semibold uppercase tracking-wide text-slate-400">
-                <th className="pl-6 pr-4 py-3 font-semibold">Name</th>
-                <th className="px-6 py-3 font-semibold">Status</th>
-                <th className="px-6 py-3 text-right font-semibold">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading && (
-                <tr>
-                  <td colSpan={3} className="px-6 py-10 text-center text-slate-500">
-                    Loading...
-                  </td>
-                </tr>
-              )}
+        <DataTable
+          columns={columns}
+          data={subCategories}
+          isLoading={isLoading}
+          isError={isError}
+          errorMessage={error?.message}
+          emptyText="No subcategories found"
+          minWidth={480}
+        />
 
-              {isError && (
-                <tr>
-                  <td colSpan={3} className="px-6 py-10 text-center text-red-500">
-                    {error.message}
-                  </td>
-                </tr>
-              )}
-
-              {!isLoading && !isError && subCategories?.length === 0 && (
-                <tr>
-                  <td colSpan={3} className="px-6 py-10 text-center text-slate-500">
-                    No subcategories found
-                  </td>
-                </tr>
-              )}
-
-              {!isLoading &&
-                !isError &&
-                subCategories?.map((sub) => {
-                  const statusUpdating =
-                    isStatusPending && statusVariables?.id === sub.id
-                  return (
-                    <tr
-                      key={sub.id}
-                      className="border-b border-slate-50 last:border-0"
-                    >
-                      <td className="pl-6 pr-4 py-3.5 font-semibold text-slate-800">
-                        {sub.name}
-                      </td>
-                      <td className="px-6 py-3.5">
-                        <label
-                          className={`inline-flex items-center ${statusUpdating ? 'cursor-wait opacity-60' : 'cursor-pointer'}`}
-                        >
-                          <input
-                            type="checkbox"
-                            className="peer sr-only"
-                            checked={!!sub.isActive}
-                            disabled={statusUpdating}
-                            onChange={(e) =>
-                              updateStatus({ id: sub.id, isActive: e.target.checked })
-                            }
-                          />
-                          <span className="relative h-6 w-11 rounded-full bg-slate-300 transition peer-checked:bg-emerald-500 after:absolute after:left-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:transition peer-checked:after:translate-x-5" />
-                        </label>
-                      </td>
-                      <td className="px-6 py-3.5 text-right">
-                        <div className="flex items-center justify-end gap-4">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              navigate(
-                                `/categories/${categoryId}/subcategories/${sub.id}/edit`
-                              )
-                            }
-                            className="flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-[#6c5ce7]"
-                          >
-                            <Pencil size={14} /> Edit
-                          </button>
-                          {/* <button
-                            type="button"
-                            onClick={() => setDeleteItem(sub)}
-                            className="flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-red-500"
-                          >
-                            <Trash2 size={14} /> Delete
-                          </button> */}
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                })}
-            </tbody>
-          </table>
-        </div>
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          showingFrom={showingFrom}
+          showingTo={showingTo}
+          totalRecords={totalRecords}
+          pageNumbers={pageNumbers}
+          isLoading={isLoading}
+          onPageChange={setPage}
+          pageSize={pageSize}
+          onPageSizeChange={handlePageSizeChange}
+        />
       </div>
 
       <ConfirmDialog

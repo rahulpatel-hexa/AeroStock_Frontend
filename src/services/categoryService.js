@@ -73,6 +73,16 @@ export const getSubCategories = async (categoryId, params = {}) => {
   return data.data.items
 }
 
+export const getSubCategoriesPage = async (categoryId, params = {}) => {
+  const { data } = await api.get(`/categories/${categoryId}/subcategories`, {
+    params: { page: 1, limit: 10, ...params },
+  })
+  return {
+    items: data.data.items ?? [],
+    pagination: data.data.pagination ?? {},
+  }
+}
+
 export const createSubCategory = async ({ categoryId, ...payload }) => {
   const { data } = await api.post(`/categories/${categoryId}/subcategories`, payload)
   return data.data.category
