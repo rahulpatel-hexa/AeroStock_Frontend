@@ -1,14 +1,10 @@
-import { LogOut } from 'lucide-react'                      // 1) naya import
 import { NAV_ITEMS } from '../../utils/constants'
-// import { useAuth } from '../../context/AuthContext'
 import SidebarItem from './SidebarItem'
+import UserMenu from './UserMenu'
 import { useAuthStore } from '../../store/authStore'
 
-
 export default function Sidebar() {
-    //   const { user, logout } = useAuth()  
     const user = useAuthStore((s) => s.user)
-    const logout = useAuthStore((s) => s.logout)                     // 2) logout add kiya
 
     return (
         <aside className="flex h-screen w-64 shrink-0 flex-col bg-[#1e2342] text-white">
@@ -32,27 +28,12 @@ export default function Sidebar() {
                 ))}
             </nav>
 
-            {/* User profile */}
-            <div className="m-4 border-t border-white/10 pt-4">
-                <div className="flex items-center gap-3 px-2">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-600 text-sm font-bold">
-                        {user.name.charAt(0)}
-                    </div>
-                    <div>
-                        <p className="text-sm font-semibold">{user.name}</p>
-                        <p className="text-xs text-slate-400">{user.role}</p>
-                    </div>
-
-                    {/* 3) Logout button */}
-                    <button
-                        onClick={logout}
-                        className="ml-auto text-slate-400 hover:text-white"
-                        title="Logout"
-                    >
-                        <LogOut size={18} />
-                    </button>
+            {/* User profile dropdown */}
+            {user && (
+                <div className="m-4 border-t border-white/10 pt-4">
+                    <UserMenu />
                 </div>
-            </div>
+            )}
         </aside>
     )
 }
