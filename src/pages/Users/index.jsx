@@ -19,7 +19,7 @@ export default function Users() {
   const navigate = useNavigate()
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(5)
+  const [pageSize, setPageSize] = useState(10)
 
   const listParams = useMemo(() => {
     const params = { page, limit: pageSize }

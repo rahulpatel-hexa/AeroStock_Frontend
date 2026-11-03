@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, ChevronLeft, Upload } from 'lucide-react'
+import { Search, Upload } from 'lucide-react'
 import { useInventoryItems, useUpdateInventoryItemStatus } from '../../hooks/useInventory'
 import DataTable from '../../components/common/DataTable'
 import Pagination from '../../components/common/Pagination'
@@ -108,13 +108,13 @@ export default function Inventory() {
           <h1 className="text-2xl font-bold text-slate-800">Inventory</h1>
           <p className="mt-1 text-sm text-slate-500">Search and manage your aircraft parts.</p>
         </div>
-        <button
+        {/* <button
           type="button"
           className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm"
         >
           Admin
           <ChevronLeft className="size-4 rotate-[-90deg] text-slate-400" />
-        </button>
+        </button> */}
       </div>
 
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">

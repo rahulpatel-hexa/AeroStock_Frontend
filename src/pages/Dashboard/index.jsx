@@ -1,6 +1,5 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChevronLeft } from 'lucide-react'
 import { useInventoryItems, useStockMovements } from '../../hooks/useInventory'
 
 const deriveStatus = (item) => {
@@ -134,13 +133,13 @@ export default function Dashboard() {
             Overview of your inventory and recent activity.
           </p>
         </div>
-        <button
+        {/* <button
           type="button"
           className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm"
         >
           Admin
           <ChevronLeft className="size-4 rotate-[-90deg] text-slate-400" />
-        </button>
+        </button> */}
       </div>
 
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">

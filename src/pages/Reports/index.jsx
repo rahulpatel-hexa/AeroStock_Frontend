@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { ArrowUpRight, ChevronLeft } from 'lucide-react'
+import { ArrowUpRight } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useInventoryItems, useStockMovements } from '../../hooks/useInventory'
 
@@ -268,13 +268,13 @@ export default function Reports() {
           <h1 className="text-2xl font-bold text-slate-800">Reports</h1>
           <p className="mt-1 text-sm text-slate-500">Simple reports for stock and valuation</p>
         </div>
-        <button
+        {/* <button
           type="button"
           className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm"
         >
           Admin
           <ChevronLeft className="size-4 rotate-[-90deg] text-slate-400" />
-        </button>
+        </button> */}
       </div>
 
       <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2">

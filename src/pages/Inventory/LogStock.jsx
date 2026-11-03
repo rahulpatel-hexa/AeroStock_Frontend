@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { ChevronLeft } from 'lucide-react'
 import { useCreateStockMovement, useInventoryItems } from '../../hooks/useInventory'
 import { inputClass } from '../../utils/helpers'
 import { ArrowLeft } from 'lucide-react'
@@ -88,13 +87,13 @@ export default function LogStock() {
           <h1 className="text-2xl font-bold text-slate-800">Log Stock</h1>
           <p className="mt-1 text-sm text-slate-500">Record stock received, sold or reserved</p>
         </div>
-        <button
+        {/* <button
           type="button"
           className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm"
         >
           Admin
           <ChevronLeft className="size-4 rotate-[-90deg] text-slate-400" />
-        </button>
+        </button> */}
       </div>
 
       <form
