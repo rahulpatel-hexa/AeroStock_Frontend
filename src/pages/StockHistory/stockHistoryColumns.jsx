@@ -47,11 +47,11 @@ export function getStockHistoryColumns({ currentPage, pageSize }) {
         </span>
       ),
     },
-    {
-      header: 'Notes',
-      accessorKey: 'notes',
-      cell: ({ getValue }) => <span className="text-slate-600">{getValue()}</span>,
-    },
+    // {
+    //   header: 'Notes',
+    //   accessorKey: 'notes',
+    //   cell: ({ getValue }) => <span className="text-slate-600">{getValue()}</span>,
+    // },
     {
       header: 'Quantity',
       // size: 100,

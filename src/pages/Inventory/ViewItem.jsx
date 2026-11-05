@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { useNavigate, useParams, Link } from 'react-router-dom'
-import { ChevronLeft, ChevronRight, ArrowLeft  } from 'lucide-react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
+import { ArrowLeft, ChevronLeft, ChevronRight, Package, PackagePlus, Pencil } from 'lucide-react'
 import { useInventoryItem, useItemStockMovements } from '../../hooks/useInventory'
 
 const PAGE_SIZE = 10
@@ -51,9 +51,9 @@ const labelName = (entity, id) => {
 
 function DetailField({ label, children }) {
   return (
-    <div>
-      <p className="mb-1 text-xs font-semibold text-slate-500">{label}</p>
-      <p className="text-sm font-medium text-slate-800">{children}</p>
+    <div className="min-w-0">
+      <p className="mb-1 text-xs font-medium text-slate-500">{label}</p>
+      <p className="break-words text-sm font-semibold text-slate-800">{children}</p>
     </div>
   )
 }
@@ -116,6 +116,20 @@ export default function ViewItem() {
   const currentPage = Math.min(page, totalPages)
   const showingFrom = movements.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1
   const showingTo = movements.length === 0 ? 0 : showingFrom + movements.length - 1
+  const quantityOnHand = Number(item.quantityOnHand ?? 0)
+  const quantityReserved = Number(item.quantityReserved ?? 0)
+  const itemStatus =
+    quantityOnHand <= 0 && quantityReserved <= 0
+      ? 'Sold'
+      : quantityReserved > 0
+        ? 'Reserved'
+        : 'Available'
+  const statusClass =
+    itemStatus === 'Available'
+      ? 'bg-emerald-50 text-emerald-700'
+      : itemStatus === 'Reserved'
+        ? 'bg-amber-50 text-amber-700'
+        : 'bg-rose-50 text-rose-700'
 
   const pageNumbers = Array.from({ length: Math.min(3, totalPages) }, (_, i) => {
     if (totalPages <= 3) return i + 1
@@ -125,19 +139,38 @@ export default function ViewItem() {
   })
 
   return (
-    <div>
-        <Link
+    <div className="space-y-5">
+      <Link
         to="/inventory"
-        className="mb-4 inline-flex items-center gap-1 text-sm font-semibold text-[#6c5ce7]"
+        className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#6c5ce7] hover:text-[#5b4bd6]"
       >
-        <ArrowLeft size={16} /> Back to Inventory
+        <ArrowLeft className="size-4" />
+        Back to Inventory
       </Link>
-      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">
-            {item.inventoryCode || `Item #${item.id}`}
-          </h1>
-          <p className="mt-1 text-sm text-slate-500">{dash(item.description)}</p>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-800">Item Details</h1>
+          <p className="mt-1 text-sm text-slate-500">
+            View inventory record and stock information
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => navigate(`/inventory/${item.id}/edit`)}
+            className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+          >
+            <Pencil className="size-4" />
+            Edit Item
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate(`/inventory/log-stock?itemId=${item.id}`)}
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#6c5ce7] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#5b4bd6]"
+          >
+            <PackagePlus className="size-4" />
+            Log Stock
+          </button>
         </div>
         {/* <button
           type="button"
@@ -146,43 +179,69 @@ export default function ViewItem() {
         >
           Back
         </button> */}
-      </div>
+      </header>
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-6">
-        <h2 className="mb-4 text-lg font-bold text-slate-800">Item Details</h2>
+      <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+        <div className="flex flex-col gap-6 p-5 sm:flex-row sm:items-start sm:p-7">
+          <div className="flex size-36 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-slate-100">
+            <div className="flex size-20 items-center justify-center rounded-xl border border-slate-200 bg-white text-[#6c5ce7] shadow-sm">
+              <Package className="size-10" strokeWidth={1.8} />
+            </div>
+          </div>
+          <div className="min-w-0 flex-1 pt-1">
+            <h2 className="break-words text-xl font-bold text-slate-800 sm:text-2xl">
+              {item.description || item.inventoryCode || `Item #${item.id}`}
+            </h2>
+            <p className="mt-1 text-sm text-slate-500">
+              Inventory ID: {dash(item.inventoryCode)}
+            </p>
+            <span className={`mt-3 inline-flex rounded-full px-3 py-1 text-xs font-semibold ${statusClass}`}>
+              {itemStatus}
+            </span>
+            <p className="mt-4 text-base font-bold text-slate-800">
+              {quantityOnHand.toLocaleString()} {quantityOnHand === 1 ? 'unit' : 'units'} in stock
+            </p>
+            {quantityReserved > 0 && (
+              <p className="mt-1 text-sm text-slate-500">
+                {quantityReserved.toLocaleString()} {quantityReserved === 1 ? 'unit' : 'units'} reserved
+              </p>
+            )}
+          </div>
+        </div>
 
-        <div className="grid grid-cols-1 gap-x-6 gap-y-5 md:grid-cols-3">
-          <DetailField label="Tracking Type">{dash(item.trackingType)}</DetailField>
-          <DetailField label="Category">
-            {labelName(item.category, item.categoryId)}
-          </DetailField>
-          <DetailField label="Subcategory">
-            {labelName(item.subcategory ?? item.subCategory, item.subcategoryId)}
-          </DetailField>
-          <DetailField label="Manufacturer">
-            {labelName(item.manufacturer, item.manufacturerId)}
-          </DetailField>
-          <DetailField label="Storage Location">
-            {labelName(item.location, item.locationId)}
-          </DetailField>
-          <DetailField label="Part Number">{dash(item.partNumber)}</DetailField>
-          <DetailField label="Serial Number">{dash(item.serialNumber)}</DetailField>
-          <DetailField label="Condition">{dash(item.conditionValue)}</DetailField>
-          <DetailField label="Quantity On Hand">{dash(item.quantityOnHand)}</DetailField>
-          <DetailField label="Quantity Reserved">{dash(item.quantityReserved)}</DetailField>
-          <DetailField label="Currency">{dash(item.currency)}</DetailField>
-          <DetailField label="Purchase Price">
-            {formatMoney(item.purchasePrice, item.currency)}
-          </DetailField>
-          <DetailField label="Asking Price">
-            {formatMoney(item.askingPrice, item.currency)}
-          </DetailField>
-          <DetailField label="Purchase Date">{formatDate(item.purchaseDate)}</DetailField>
-          <DetailField label="Notes">{dash(item.notes ?? item.note)}</DetailField>
+        <div className="border-t border-slate-200 px-5 py-5 sm:px-7 sm:py-6">
+          <h3 className="mb-5 text-sm font-bold text-slate-800">Item Information</h3>
+          <div className="grid grid-cols-1 gap-x-8 gap-y-5 sm:grid-cols-2">
+            <DetailField label="Category">{labelName(item.category, item.categoryId)}</DetailField>
+            <DetailField label="Manufacturer">
+              {labelName(item.manufacturer, item.manufacturerId)}
+            </DetailField>
+            <DetailField label="Part Number">{dash(item.partNumber)}</DetailField>
+            <DetailField label="Serial Number">{dash(item.serialNumber)}</DetailField>
+            <DetailField label="Condition">{dash(item.conditionValue)}</DetailField>
+            <DetailField label="Storage Location">
+              {labelName(item.location, item.locationId)}
+            </DetailField>
+            <DetailField label="Subcategory">
+              {labelName(item.subcategory ?? item.subCategory, item.subcategoryId)}
+            </DetailField>
+            <DetailField label="Tracking Type">{dash(item.trackingType)}</DetailField>
+            <DetailField label="Quantity On Hand">{dash(item.quantityOnHand)}</DetailField>
+            <DetailField label="Quantity Reserved">{dash(item.quantityReserved)}</DetailField>
+            <DetailField label="Purchase Price">
+              {formatMoney(item.purchasePrice, item.currency)}
+            </DetailField>
+            <DetailField label="Asking Price">
+              {formatMoney(item.askingPrice, item.currency)}
+            </DetailField>
+            <DetailField label="Currency">{dash(item.currency)}</DetailField>
+            <DetailField label="Purchase Date">{formatDate(item.purchaseDate)}</DetailField>
+            <DetailField label="Notes">{dash(item.notes ?? item.note)}</DetailField>
+          </div>
         </div>
 
         {attachments.length > 0 && (
-          <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-4">
+          <div className="border-t border-slate-200 px-5 py-5 sm:px-7">
             <h3 className="mb-3 text-sm font-bold text-slate-800">Attachments</h3>
             <ul className="space-y-2">
               {attachments.map((file, index) => {
@@ -209,7 +268,7 @@ export default function ViewItem() {
             </ul>
           </div>
         )}
-      </div>
+      </section>
 
       {/* <div className="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white">
         <div className="border-b border-slate-100 px-6 py-4">

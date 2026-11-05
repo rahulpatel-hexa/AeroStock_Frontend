@@ -1,6 +1,7 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { ArrowLeft } from 'lucide-react'
 import FormField from '../../components/common/FormField'
 import { inventorySchema } from '../../schemas/inventorySchema'
 import { CONDITIONS, CURRENCIES } from '../../utils/constants'
@@ -77,6 +78,13 @@ export default function AddItem() {
 
   return (
     <div>
+      <Link
+        to="/inventory"
+        className="mb-4 inline-flex items-center gap-1.5 text-sm font-semibold text-[#6c5ce7] hover:text-[#5b4bd6]"
+      >
+        <ArrowLeft className="size-4" />
+        Back to Inventory
+      </Link>
       <h1 className="text-2xl font-bold text-slate-800">Add Inventory Item</h1>
       <p className="mb-6 mt-1 text-sm text-slate-500">Enter the essential details for a new part</p>
 

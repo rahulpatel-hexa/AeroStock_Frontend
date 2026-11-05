@@ -25,7 +25,7 @@ const mapRow = (item) => ({
   movementType: item.movementType,
   movement: movementLabel(item.movementType),
   quantity: Number(item.quantity ?? 0),
-  notes: item.notes || '—',
+  // notes: item.notes || '—',
   user: item.userName || '—',
 })
 
