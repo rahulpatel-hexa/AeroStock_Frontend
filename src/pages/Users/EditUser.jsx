@@ -1,18 +1,36 @@
-import { useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, ImagePlus, X } from 'lucide-react'
 import FormField from '../../components/common/FormField'
 import { useUser, useUpdateUser } from '../../hooks/useUsers'
 import { editUserSchema } from '../../schemas/userSchema'
 import { inputClass } from '../../utils/helpers'
+
+const MAX_PROFILE_IMAGE_SIZE = 10 * 1024 * 1024
+const PROFILE_IMAGE_TYPES = new Set([
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'image/gif',
+  'image/webp',
+])
 
 export default function EditUser() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { data: user, isLoading, isError, error } = useUser(id)
   const { mutate: updateUser, isPending } = useUpdateUser()
+  const imageInputRef = useRef(null)
+  const [profileImage, setProfileImage] = useState(null)
+  const [profileImageError, setProfileImageError] = useState('')
+  const [previewUrl, setPreviewUrl] = useState('')
+
+  useEffect(() => {
+    if (!previewUrl) return
+    return () => URL.revokeObjectURL(previewUrl)
+  }, [previewUrl])
 
   const {
     register,
@@ -50,7 +68,38 @@ export default function EditUser() {
     if (values.password?.trim()) {
       payload.password = values.password
     }
+    if (profileImage) {
+      payload.profileImage = profileImage
+    }
     updateUser(payload, { onSuccess: () => navigate('/users') })
+  }
+
+  const handleProfileImageChange = (event) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    if (!PROFILE_IMAGE_TYPES.has(file.type)) {
+      setProfileImageError('Choose a JPEG, PNG, GIF, or WebP image.')
+      event.target.value = ''
+      return
+    }
+
+    if (file.size > MAX_PROFILE_IMAGE_SIZE) {
+      setProfileImageError('Image must be 10 MB or smaller.')
+      event.target.value = ''
+      return
+    }
+
+    setProfileImage(file)
+    setPreviewUrl(URL.createObjectURL(file))
+    setProfileImageError('')
+  }
+
+  const removeSelectedProfileImage = () => {
+    setProfileImage(null)
+    setPreviewUrl('')
+    setProfileImageError('')
+    if (imageInputRef.current) imageInputRef.current.value = ''
   }
 
   if (isLoading) {
@@ -119,6 +168,59 @@ export default function EditUser() {
               <span className="text-sm text-slate-700">Enabled</span>
             </label>
           </div> */}
+        </div>
+
+        <div className="mt-6">
+          <p className="mb-1.5 text-xs font-semibold text-slate-500">
+            Profile Image <span className="font-normal">(Optional)</span>
+          </p>
+          <div className="flex flex-wrap items-center gap-4">
+            {(previewUrl || user.profileImageUrl) && (
+              <img
+                src={previewUrl || user.profileImageUrl}
+                alt="Profile preview"
+                className="size-20 rounded-xl border border-slate-200 object-cover"
+              />
+            )}
+            <div className="flex flex-wrap items-center gap-3">
+              <label
+                htmlFor="profileImage"
+                className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              >
+                <ImagePlus size={16} />
+                {profileImage || user.profileImageUrl ? 'Change image' : 'Choose image'}
+              </label>
+              <input
+                ref={imageInputRef}
+                id="profileImage"
+                type="file"
+                accept=".jpg,.jpeg,image/jpeg,image/png,image/gif,image/webp"
+                className="sr-only"
+                onChange={handleProfileImageChange}
+              />
+              {profileImage && (
+                <>
+                  <span className="max-w-56 truncate text-sm text-slate-500">
+                    {profileImage.name}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={removeSelectedProfileImage}
+                    className="inline-flex items-center gap-1 text-sm font-semibold text-red-600 hover:text-red-700"
+                  >
+                    <X size={16} />
+                    Remove
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+          {profileImageError && (
+            <p className="mt-1 text-xs text-red-500">{profileImageError}</p>
+          )}
+          <p className="mt-1 text-xs text-slate-500">
+            JPEG, PNG, GIF, or WebP. Maximum file size: 10 MB.
+          </p>
         </div>
 
         <div className="mt-8 flex justify-end gap-3">
