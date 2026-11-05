@@ -22,8 +22,10 @@ const mapRow = (item) => ({
   id: item.id,
   date: item.date,
   itemName: item.inventoryName || '—',
+  movementType: item.movementType,
   movement: movementLabel(item.movementType),
   quantity: Number(item.quantity ?? 0),
+  // notes: item.notes || '—',
   user: item.userName || '—',
 })
 

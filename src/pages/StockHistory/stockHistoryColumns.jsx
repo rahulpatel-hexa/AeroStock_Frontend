@@ -7,6 +7,7 @@ const formatDate = (iso) => {
 
 const quantityClass = (qty, movement) => {
   if (movement === 'Reserved') return 'text-slate-800'
+  if (movement === 'Released') return 'font-semibold text-blue-600'
   if (qty > 0) return 'font-semibold text-emerald-600'
   if (qty < 0) return 'font-semibold text-rose-600'
   return 'text-slate-800'
@@ -14,6 +15,7 @@ const quantityClass = (qty, movement) => {
 
 const formatQuantity = (qty, movement) => {
   if (movement === 'Reserved') return String(Math.abs(qty))
+  if (movement === 'Released') return `+${Math.abs(qty)}`
   if (qty > 0) return `+${qty}`
   return String(qty)
 }
@@ -39,8 +41,17 @@ export function getStockHistoryColumns({ currentPage, pageSize }) {
     {
       header: 'Movement',
       accessorKey: 'movement',
-      cell: ({ getValue }) => <span className="text-slate-700">{getValue()}</span>,
+      cell: ({ row, getValue }) => (
+        <span className={row.original.movementType === 'RELEASED' ? 'font-semibold text-blue-600' : 'text-slate-700'}>
+          {getValue()}
+        </span>
+      ),
     },
+    // {
+    //   header: 'Notes',
+    //   accessorKey: 'notes',
+    //   cell: ({ getValue }) => <span className="text-slate-600">{getValue()}</span>,
+    // },
     {
       header: 'Quantity',
       // size: 100,
