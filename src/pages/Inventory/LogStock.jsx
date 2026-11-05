@@ -11,6 +11,7 @@ const MOVEMENT_TYPES = [
   { value: 'SOLD', label: '− Sold', activeClass: 'border-rose-500 text-rose-600' },
   // { value: 'INTERNAL_USE', label: '− Internal Use', activeClass: 'border-rose-500 text-rose-600' },
   { value: 'RESERVED', label: '− Reserved', activeClass: 'border-amber-500 text-amber-600' },
+  { value: 'RELEASED', label: '↩ Released', activeClass: 'border-blue-500 text-blue-600' },
 ]
 
 const emptyToNull = (value) => {
@@ -28,6 +29,7 @@ export default function LogStock() {
 
   const [movementType, setMovementType] = useState('RECEIVED')
   const [quantity, setQuantity] = useState('')
+  const [fromReserved, setFromReserved] = useState(false)
   const [transactionDate, setTransactionDate] = useState(todayIso)
   const [notes, setNotes] = useState('')
   const [error, setError] = useState('')
@@ -38,10 +40,22 @@ export default function LogStock() {
   )
 
   const currentStock = Number(selected?.quantityOnHand ?? 0)
+  const currentReserved = Number(selected?.quantityReserved ?? 0)
   const qty = /^\d+$/.test(quantity.trim()) ? Number(quantity) : 0
-  const decreasesStock = movementType !== 'RECEIVED'
-  const stockAfter = decreasesStock ? currentStock - qty : currentStock + qty
-  const stockAfterClass = stockAfter >= currentStock ? 'text-emerald-600' : 'text-rose-600'
+  const stockAfterAvailable = {
+    RECEIVED: currentStock + qty,
+    RESERVED: currentStock - qty,
+    RELEASED: currentStock + qty,
+    SOLD: fromReserved ? currentStock : currentStock - qty,
+  }[movementType]
+  const stockAfterReserved = {
+    RECEIVED: currentReserved,
+    RESERVED: currentReserved + qty,
+    RELEASED: currentReserved - qty,
+    SOLD: fromReserved ? currentReserved - qty : currentReserved,
+  }[movementType]
+  const availableAfterClass = stockAfterAvailable >= currentStock ? 'text-emerald-600' : 'text-rose-600'
+  const reservedAfterClass = stockAfterReserved >= currentReserved ? 'text-emerald-600' : 'text-rose-600'
 
   const onConfirm = async (event) => {
     event.preventDefault()
@@ -53,8 +67,23 @@ export default function LogStock() {
       setError('Enter a whole number greater than 0')
       return
     }
-    if (decreasesStock && stockAfter < 0) {
-      setError('Quantity cannot exceed current stock')
+    if (movementType === 'RELEASED' && selected.trackingType?.toUpperCase() === 'SERIALIZED' && Number(quantity) !== 1) {
+      setError('Serialized items can only release one item at a time')
+      return
+    }
+    if (movementType === 'RELEASED' && Number(quantity) > currentReserved) {
+      setError('Quantity cannot exceed reserved stock')
+      return
+    }
+    if (movementType === 'SOLD' && fromReserved && Number(quantity) > currentReserved) {
+      setError('Quantity cannot exceed reserved stock')
+      return
+    }
+    if (
+      (movementType === 'RESERVED' || (movementType === 'SOLD' && !fromReserved)) &&
+      Number(quantity) > currentStock
+    ) {
+      setError('Quantity cannot exceed available stock')
       return
     }
 
@@ -64,6 +93,7 @@ export default function LogStock() {
       quantity: Number(quantity),
       transactionDate,
       notes: emptyToNull(notes),
+      ...(movementType === 'SOLD' && fromReserved ? { fromReserved: true } : {}),
     }
 
     try {
@@ -85,7 +115,7 @@ export default function LogStock() {
       <div className="mb-6 flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-800">Log Stock</h1>
-          <p className="mt-1 text-sm text-slate-500">Record stock received, sold or reserved</p>
+          <p className="mt-1 text-sm text-slate-500">Record stock received, sold, reserved or released</p>
         </div>
         {/* <button
           type="button"
@@ -110,25 +140,55 @@ export default function LogStock() {
 
         <div className="mt-5 rounded-xl bg-[#f3f0ff] px-4 py-3">
           <p className="text-xs font-semibold text-slate-500">Current Stock</p>
-          <p className="text-2xl font-bold text-slate-900">{selected ? currentStock : 0} units</p>
+          <div className="mt-2 flex flex-wrap gap-x-8 gap-y-2">
+            <p className="text-sm font-semibold text-slate-700">
+              Available <span className="ml-1 text-lg font-bold text-slate-900">{selected ? currentStock : 0}</span>
+            </p>
+            <p className="text-sm font-semibold text-slate-700">
+              Reserved <span className="ml-1 text-lg font-bold text-slate-900">{selected ? currentReserved : 0}</span>
+            </p>
+          </div>
         </div>
 
         <p className="mb-2 mt-6 text-xs font-semibold uppercase tracking-wide text-slate-500">
           Transaction Type
         </p>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {MOVEMENT_TYPES.map((type) => (
             <button
               key={type.value}
               type="button"
-              onClick={() => setMovementType(type.value)}
+              onClick={() => {
+                setMovementType(type.value)
+                setError('')
+              }}
+              disabled={type.value === 'RELEASED' && currentReserved === 0}
+              title={type.value === 'RELEASED' && currentReserved === 0 ? 'No reserved stock to release' : undefined}
               className={`rounded-lg border px-4 py-3 text-sm font-semibold ${movementType === type.value ? type.activeClass : 'border-slate-200 text-slate-700'
-                }`}
+                } disabled:cursor-not-allowed disabled:opacity-50`}
             >
               {type.label}
             </button>
           ))}
         </div>
+
+        {movementType === 'SOLD' && (
+          <label className="mt-4 flex items-center gap-2 text-sm text-slate-700">
+            <input
+              type="checkbox"
+              checked={fromReserved}
+              onChange={(event) => {
+                setFromReserved(event.target.checked)
+                setError('')
+              }}
+              disabled={currentReserved === 0}
+              className="size-4 rounded border-slate-300 text-[#6c5ce7] focus:ring-[#6c5ce7]"
+            />
+            <span className={currentReserved === 0 ? 'text-slate-400' : ''}>
+              Sell from reserved stock
+            </span>
+          </label>
+        )}
 
         <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
           <label className="block text-xs font-semibold text-slate-500">
@@ -170,8 +230,11 @@ export default function LogStock() {
         <div className="mt-6 flex flex-col gap-3 border-t border-slate-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-slate-500">
             Stock after transaction{' '}
-            <span className={`ml-2 text-base font-bold ${selected && qty ? stockAfterClass : 'text-slate-800'}`}>
-              {selected ? stockAfter : 0} units
+            <span className={`ml-2 text-base font-bold ${selected && qty ? availableAfterClass : 'text-slate-800'}`}>
+              Available: {selected ? stockAfterAvailable : 0}
+            </span>
+            <span className={`ml-3 text-base font-bold ${selected && qty ? reservedAfterClass : 'text-slate-800'}`}>
+              Reserved: {selected ? stockAfterReserved : 0}
             </span>
           </p>
           <div className="flex justify-end gap-3">
