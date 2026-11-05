@@ -1,4 +1,33 @@
 import { Eye, Pencil } from 'lucide-react'
+import { useState } from 'react'
+
+function getNameInitials(name = '') {
+  const parts = name.trim().split(/\s+/).filter(Boolean)
+  if (parts.length === 0) return '?'
+  return parts.length > 1
+    ? `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase()
+    : parts[0][0].toUpperCase()
+}
+
+function ProfileAvatar({ user }) {
+  const [failedImageUrl, setFailedImageUrl] = useState(null)
+  const imageUrl = user.profileImageUrl
+
+  return (
+    <span className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#e9e6fb] text-sm font-semibold text-[#6c5ce7]">
+      {imageUrl && failedImageUrl !== imageUrl ? (
+        <img
+          src={imageUrl}
+          alt={`${user.name}'s profile`}
+          className="size-full object-cover"
+          onError={() => setFailedImageUrl(imageUrl)}
+        />
+      ) : (
+        getNameInitials(user.name)
+      )}
+    </span>
+  )
+}
 
 export function getUserColumns({
   currentPage,
@@ -21,9 +50,13 @@ export function getUserColumns({
     {
       header: 'Name',
       accessorKey: 'name',
-      // auto
-      cell: ({ getValue }) => (
-        <span className="font-semibold text-slate-800">{getValue()}</span>
+      cell: ({ row }) => (
+        <div className="flex min-w-0 items-center gap-3">
+          <ProfileAvatar user={row.original} />
+          <span className="min-w-0 truncate font-semibold text-slate-800">
+            {row.original.name}
+          </span>
+        </div>
       ),
     },
     {

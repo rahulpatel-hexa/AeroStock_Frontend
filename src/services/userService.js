@@ -8,6 +8,17 @@ const unwrapList = (payload) => {
   }
 }
 
+const multipartConfig = {
+  transformRequest: [
+    (body, headers) => {
+      if (body instanceof FormData) {
+        delete headers['Content-Type']
+      }
+      return body
+    },
+  ],
+}
+
 // List API: GET /users?page&limit → data.data.items + data.data.pagination
 export const getUsersPage = async (params = {}) => {
   const { data } = await api.get('/users', {
@@ -22,13 +33,37 @@ export const getUser = async (id) => {
   return data.data.user ?? data.data
 }
 
-export const createUser = async (payload) => {
-  const { data } = await api.post('/users', payload)
+export const createUser = async ({ profileImage, ...payload }) => {
+  let requestBody = payload
+  let config
+
+  if (profileImage) {
+    requestBody = new FormData()
+    Object.entries(payload).forEach(([key, value]) => {
+      requestBody.append(key, String(value))
+    })
+    requestBody.append('profileImage', profileImage)
+    config = multipartConfig
+  }
+
+  const { data } = await api.post('/users', requestBody, config)
   return data.data.user ?? data.data
 }
 
-export const updateUser = async ({ id, ...payload }) => {
-  const { data } = await api.put(`/users/${id}`, payload)
+export const updateUser = async ({ id, profileImage, ...payload }) => {
+  let requestBody = payload
+  let config
+
+  if (profileImage) {
+    requestBody = new FormData()
+    Object.entries(payload).forEach(([key, value]) => {
+      requestBody.append(key, String(value))
+    })
+    requestBody.append('profileImage', profileImage)
+    config = multipartConfig
+  }
+
+  const { data } = await api.put(`/users/${id}`, requestBody, config)
   return data.data.user ?? data.data
 }
 
