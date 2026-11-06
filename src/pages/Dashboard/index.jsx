@@ -4,15 +4,6 @@ import {
   useDashboardRecentActivity,
   useDashboardStats,
 } from '../../hooks/useDashboard'
-import { useInventoryItems } from '../../hooks/useInventory'
-
-const deriveStatus = (item) => {
-  const onHand = Number(item.quantityOnHand ?? 0)
-  const reserved = Number(item.quantityReserved ?? 0)
-  if (onHand <= 0 && reserved <= 0) return 'Sold'
-  if (reserved > 0) return 'Reserved'
-  return 'Available'
-}
 
 const ACTIVITY_META = {
   RECEIVED: { label: 'Stock received', tone: 'positive' },
@@ -53,45 +44,13 @@ export default function Dashboard() {
     isError: activityError,
     error: activityErrorDetails,
   } = useDashboardRecentActivity(5)
-  const { data: inventoryData, isLoading: inventoryLoading } = useInventoryItems({ page: 1, limit: 100 })
-
-  const stats = useMemo(() => {
-    const items = inventoryData?.items ?? []
-    const totalFromApi = Number(inventoryData?.pagination?.total)
-    const totalItems = Number.isFinite(totalFromApi) && totalFromApi > 0 ? totalFromApi : items.length
-
-    let availableQty = 0
-    let reservedQty = 0
-    let availableCount = 0
-    let reservedCount = 0
-    let soldCount = 0
-
-    items.forEach((item) => {
-      const onHand = Number(item.quantityOnHand ?? 0)
-      const reserved = Number(item.quantityReserved ?? 0)
-      const available = Math.max(0, onHand - reserved)
-      availableQty += available
-      reservedQty += reserved
-
-      const status = deriveStatus(item)
-      if (status === 'Available') availableCount += 1
-      else if (status === 'Reserved') reservedCount += 1
-      else soldCount += 1
-    })
-
-    const statusTotal = availableCount + reservedCount + soldCount
-    const pct = (n) => (statusTotal > 0 ? Math.round((n / statusTotal) * 100) : 0)
-
-    return {
-      totalItems,
-      availableQty,
-      reservedQty,
-      soldCount,
-      availablePct: pct(availableCount),
-      reservedPct: pct(reservedCount),
-      soldPct: pct(soldCount),
-    }
-  }, [inventoryData])
+  const availableQuantity = Number(dashboardStats?.availableQuantity ?? 0)
+  const reservedQuantity = Number(dashboardStats?.reservedQuantity ?? 0)
+  const soldQuantity = Number(dashboardStats?.soldQuantity ?? 0)
+  const totalQuantity = availableQuantity + reservedQuantity + soldQuantity
+  const getPercentage = (quantity) => (
+    totalQuantity > 0 ? Math.round((quantity / totalQuantity) * 100) : 0
+  )
 
   const recentActivity = useMemo(() => {
     return activityData.map((row) => {
@@ -134,9 +93,9 @@ export default function Dashboard() {
   ]
 
   const overviewBars = [
-    { label: 'Available', pct: stats.availablePct, barClass: 'bg-emerald-500' },
-    { label: 'Reserved', pct: stats.reservedPct, barClass: 'bg-amber-400' },
-    { label: 'Sold', pct: stats.soldPct, barClass: 'bg-rose-500' },
+    { label: 'Available', pct: getPercentage(availableQuantity), barClass: 'bg-emerald-500' },
+    { label: 'Reserved', pct: getPercentage(reservedQuantity), barClass: 'bg-amber-400' },
+    { label: 'Sold', pct: getPercentage(soldQuantity), barClass: 'bg-rose-500' },
   ]
 
   return (
@@ -254,13 +213,13 @@ export default function Dashboard() {
               <div className="mb-2 flex items-center justify-between text-sm">
                 <span className="font-medium text-slate-700">{bar.label}</span>
                 <span className="font-semibold text-slate-800">
-                  {inventoryLoading ? '—' : `${bar.pct}%`}
+                  {statsLoading || statsError ? '—' : `${bar.pct}%`}
                 </span>
               </div>
               <div className="h-2.5 overflow-hidden rounded-full bg-slate-100">
                 <div
                   className={`h-full rounded-full transition-all ${bar.barClass}`}
-                  style={{ width: inventoryLoading ? '0%' : `${bar.pct}%` }}
+                  style={{ width: statsLoading || statsError ? '0%' : `${bar.pct}%` }}
                 />
               </div>
             </div>
