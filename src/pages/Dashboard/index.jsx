@@ -1,7 +1,10 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useDashboardStats } from '../../hooks/useDashboard'
-import { useInventoryItems, useStockMovements } from '../../hooks/useInventory'
+import {
+  useDashboardRecentActivity,
+  useDashboardStats,
+} from '../../hooks/useDashboard'
+import { useInventoryItems } from '../../hooks/useInventory'
 
 const deriveStatus = (item) => {
   const onHand = Number(item.quantityOnHand ?? 0)
@@ -44,8 +47,13 @@ export default function Dashboard() {
     isError: statsError,
     error: statsErrorDetails,
   } = useDashboardStats()
+  const {
+    data: activityData = [],
+    isLoading: activityLoading,
+    isError: activityError,
+    error: activityErrorDetails,
+  } = useDashboardRecentActivity(5)
   const { data: inventoryData, isLoading: inventoryLoading } = useInventoryItems({ page: 1, limit: 100 })
-  const { data: movementsData, isLoading: movementsLoading } = useStockMovements({ page: 1, limit: 5 })
 
   const stats = useMemo(() => {
     const items = inventoryData?.items ?? []
@@ -86,21 +94,21 @@ export default function Dashboard() {
   }, [inventoryData])
 
   const recentActivity = useMemo(() => {
-    return (movementsData?.items ?? []).slice(0, 4).map((row) => {
+    return activityData.map((row) => {
       const meta = ACTIVITY_META[row.movementType] || {
         label: row.movementType || 'Stock update',
         tone: 'neutral',
       }
-      const code = row.inventoryCode || row.inventoryId || '—'
+      const code = row.inventoryCode || '—'
       return {
         id: row.id,
-        title: row.inventoryName || 'Inventory item',
+        title: row.itemName || 'Inventory item',
         subtitle: `${meta.label} · ${code}`,
-        value: formatActivityValue(row.movementType, row.quantity),
+        value: formatActivityValue(row.movementType, row.quantityChange),
         tone: meta.tone,
       }
     })
-  }, [movementsData])
+  }, [activityData])
 
   const metricCards = [
     {
@@ -177,13 +185,18 @@ export default function Dashboard() {
             <h2 className="text-base font-bold text-slate-800">Recent Activity</h2>
           </div>
           <div className="divide-y divide-slate-100">
-            {movementsLoading && (
+            {activityLoading && (
               <p className="px-5 py-8 text-center text-sm text-slate-500">Loading activity…</p>
             )}
-            {!movementsLoading && recentActivity.length === 0 && (
+            {activityError && (
+              <p role="alert" className="px-5 py-8 text-center text-sm text-rose-600">
+                Unable to load recent activity: {activityErrorDetails.message}
+              </p>
+            )}
+            {!activityLoading && !activityError && recentActivity.length === 0 && (
               <p className="px-5 py-8 text-center text-sm text-slate-500">No recent stock activity</p>
             )}
-            {!movementsLoading &&
+            {!activityLoading && !activityError &&
               recentActivity.map((row) => (
                 <div key={row.id} className="flex items-center justify-between gap-4 px-5 py-4">
                   <div className="min-w-0">
@@ -208,21 +221,21 @@ export default function Dashboard() {
             <button
               type="button"
               onClick={() => navigate('/inventory/new')}
-              className="w-full rounded-xl bg-[#6c5ce7] px-4 py-3 text-sm font-semibold text-white hover:bg-[#5b4bd6]"
+              className="w-full rounded-lg bg-[#6c5ce7] px-4 py-3 text-sm font-semibold text-white hover:bg-[#5b4bd6]"
             >
               + Add Inventory Item
             </button>
             <button
               type="button"
-              onClick={() => navigate('/inventory/log-stock')}
-              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-800 hover:bg-slate-50"
+              onClick={() => navigate('/reports')}
+              className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-800 hover:bg-slate-50"
             >
-              Log Stock
+              Reports
             </button>
             <button
               type="button"
               onClick={() => navigate('/stock-history')}
-              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-800 hover:bg-slate-50"
+              className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-800 hover:bg-slate-50"
             >
               View Stock History
             </button>

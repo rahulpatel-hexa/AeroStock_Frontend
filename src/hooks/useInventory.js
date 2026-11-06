@@ -46,6 +46,7 @@ export const useCreateInventoryItem = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['inventory'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard', 'stats'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'recent-activity'] })
       toast.success('Item added successfully')
     },
     onError: (error) => toast.error(error.message),
@@ -60,6 +61,7 @@ export const useImportInventoryItems = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['inventory'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard', 'stats'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'recent-activity'] })
       toast.success('Inventory imported successfully')
     },
     onError: (error) => toast.error(error.message),
@@ -74,6 +76,7 @@ export const useUpdateInventoryItem = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['inventory'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard', 'stats'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'recent-activity'] })
       toast.success('Item updated successfully')
     },
     onError: (error) => toast.error(error.message),
@@ -103,6 +106,7 @@ export const useCreateStockMovement = () => {
       queryClient.invalidateQueries({ queryKey: ['inventory'] })
       queryClient.invalidateQueries({ queryKey: ['stock-movements'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard', 'stats'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'recent-activity'] })
       toast.success('Stock transaction recorded')
     },
     onError: (error) => toast.error(error.message),
