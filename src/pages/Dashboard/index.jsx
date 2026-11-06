@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useDashboardStats } from '../../hooks/useDashboard'
 import { useInventoryItems, useStockMovements } from '../../hooks/useInventory'
 
 const deriveStatus = (item) => {
@@ -37,6 +38,12 @@ const activityValueClass = (tone) => {
 
 export default function Dashboard() {
   const navigate = useNavigate()
+  const {
+    data: dashboardStats,
+    isLoading: statsLoading,
+    isError: statsError,
+    error: statsErrorDetails,
+  } = useDashboardStats()
   const { data: inventoryData, isLoading: inventoryLoading } = useInventoryItems({ page: 1, limit: 100 })
   const { data: movementsData, isLoading: movementsLoading } = useStockMovements({ page: 1, limit: 5 })
 
@@ -98,22 +105,22 @@ export default function Dashboard() {
   const metricCards = [
     {
       label: 'Total Items',
-      value: stats.totalItems,
+      value: dashboardStats?.totalItems,
       dotClass: 'bg-[#6c5ce7]',
     },
     {
       label: 'Available',
-      value: stats.availableQty,
+      value: dashboardStats?.availableQuantity,
       dotClass: 'bg-emerald-500',
     },
     {
       label: 'Reserved',
-      value: stats.reservedQty,
+      value: dashboardStats?.reservedQuantity,
       dotClass: 'bg-amber-400',
     },
     {
       label: 'Sold',
-      value: stats.soldCount,
+      value: dashboardStats?.soldQuantity,
       dotClass: 'bg-rose-500',
     },
   ]
@@ -153,11 +160,16 @@ export default function Dashboard() {
               <span className={`mt-1 size-2.5 rounded-full ${card.dotClass}`} />
             </div>
             <p className="mt-3 text-3xl font-bold tracking-tight text-slate-900">
-              {inventoryLoading ? '—' : card.value.toLocaleString()}
+              {statsLoading || statsError ? '—' : card.value.toLocaleString()}
             </p>
           </div>
         ))}
       </div>
+      {statsError && (
+        <p role="alert" className="mb-6 text-sm text-rose-600">
+          Unable to load dashboard stats: {statsErrorDetails.message}
+        </p>
+      )}
 
       <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
         <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">

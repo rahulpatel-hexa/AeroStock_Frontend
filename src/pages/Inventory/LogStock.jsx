@@ -129,9 +129,9 @@ export default function LogStock() {
       <form
         onSubmit={onConfirm}
         noValidate
-        className="mx-auto max-w-3xl rounded-2xl border border-slate-200 bg-white p-6"
+        className="rounded-2xl border border-slate-200 bg-white p-6"
       >
-        <h2 className="text-lg font-bold text-slate-800">Log Stock Transaction</h2>
+        <h2 className="mb-4 text-lg font-bold text-slate-800">Log Stock Transaction</h2>
         {selected && (
           <p className="mt-1 text-sm text-slate-500">
             {selected.description} · {selected.inventoryCode || selected.id}
@@ -190,7 +190,7 @@ export default function LogStock() {
           </label>
         )}
 
-        <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
           <label className="block text-xs font-semibold text-slate-500">
             Number of items *
             <input
@@ -227,32 +227,31 @@ export default function LogStock() {
 
         {error && <p className="mt-3 text-xs text-red-500">{error}</p>}
 
-        <div className="mt-6 flex flex-col gap-3 border-t border-slate-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm text-slate-500">
-            Stock after transaction{' '}
-            <span className={`ml-2 text-base font-bold ${selected && qty ? availableAfterClass : 'text-slate-800'}`}>
-              Available: {selected ? stockAfterAvailable : 0}
-            </span>
-            <span className={`ml-3 text-base font-bold ${selected && qty ? reservedAfterClass : 'text-slate-800'}`}>
-              Reserved: {selected ? stockAfterReserved : 0}
-            </span>
-          </p>
-          <div className="flex justify-end gap-3">
-            <button
-              type="button"
-              onClick={() => navigate('/inventory')}
-              className="rounded-lg border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-800 hover:bg-slate-50"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={createMovement.isPending}
-              className="rounded-lg bg-[#6c5ce7] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#5b4bd6] disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {createMovement.isPending ? 'Saving...' : 'Confirm Transaction'}
-            </button>
-          </div>
+        <p className="mt-6 text-sm text-slate-500">
+          Stock after transaction{' '}
+          <span className={`ml-2 text-base font-bold ${selected && qty ? availableAfterClass : 'text-slate-800'}`}>
+            Available: {selected ? stockAfterAvailable : 0}
+          </span>
+          <span className={`ml-3 text-base font-bold ${selected && qty ? reservedAfterClass : 'text-slate-800'}`}>
+            Reserved: {selected ? stockAfterReserved : 0}
+          </span>
+        </p>
+
+        <div className="mt-8 flex justify-end gap-3">
+          <button
+            type="button"
+            onClick={() => navigate('/inventory')}
+            className="rounded-lg border border-slate-200 bg-white px-6 py-2.5 text-sm font-semibold text-slate-800 hover:bg-slate-50"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={createMovement.isPending}
+            className="rounded-lg bg-[#6c5ce7] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#5b4bd6] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {createMovement.isPending ? 'Saving...' : 'Confirm Transaction'}
+          </button>
         </div>
       </form>
     </div>
