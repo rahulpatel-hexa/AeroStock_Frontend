@@ -1,14 +1,9 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useInventoryItems, useStockMovements } from '../../hooks/useInventory'
-
-const deriveStatus = (item) => {
-  const onHand = Number(item.quantityOnHand ?? 0)
-  const reserved = Number(item.quantityReserved ?? 0)
-  if (onHand <= 0 && reserved <= 0) return 'Sold'
-  if (reserved > 0) return 'Reserved'
-  return 'Available'
-}
+import {
+  useDashboardRecentActivity,
+  useDashboardStats,
+} from '../../hooks/useDashboard'
 
 const ACTIVITY_META = {
   RECEIVED: { label: 'Stock received', tone: 'positive' },
@@ -37,91 +32,70 @@ const activityValueClass = (tone) => {
 
 export default function Dashboard() {
   const navigate = useNavigate()
-  const { data: inventoryData, isLoading: inventoryLoading } = useInventoryItems({ page: 1, limit: 100 })
-  const { data: movementsData, isLoading: movementsLoading } = useStockMovements({ page: 1, limit: 5 })
-
-  const stats = useMemo(() => {
-    const items = inventoryData?.items ?? []
-    const totalFromApi = Number(inventoryData?.pagination?.total)
-    const totalItems = Number.isFinite(totalFromApi) && totalFromApi > 0 ? totalFromApi : items.length
-
-    let availableQty = 0
-    let reservedQty = 0
-    let availableCount = 0
-    let reservedCount = 0
-    let soldCount = 0
-
-    items.forEach((item) => {
-      const onHand = Number(item.quantityOnHand ?? 0)
-      const reserved = Number(item.quantityReserved ?? 0)
-      const available = Math.max(0, onHand - reserved)
-      availableQty += available
-      reservedQty += reserved
-
-      const status = deriveStatus(item)
-      if (status === 'Available') availableCount += 1
-      else if (status === 'Reserved') reservedCount += 1
-      else soldCount += 1
-    })
-
-    const statusTotal = availableCount + reservedCount + soldCount
-    const pct = (n) => (statusTotal > 0 ? Math.round((n / statusTotal) * 100) : 0)
-
-    return {
-      totalItems,
-      availableQty,
-      reservedQty,
-      soldCount,
-      availablePct: pct(availableCount),
-      reservedPct: pct(reservedCount),
-      soldPct: pct(soldCount),
-    }
-  }, [inventoryData])
+  const {
+    data: dashboardStats,
+    isLoading: statsLoading,
+    isError: statsError,
+    error: statsErrorDetails,
+  } = useDashboardStats()
+  const {
+    data: activityData = [],
+    isLoading: activityLoading,
+    isError: activityError,
+    error: activityErrorDetails,
+  } = useDashboardRecentActivity(5)
+  const availableQuantity = Number(dashboardStats?.availableQuantity ?? 0)
+  const reservedQuantity = Number(dashboardStats?.reservedQuantity ?? 0)
+  const soldQuantity = Number(dashboardStats?.soldQuantity ?? 0)
+  const totalQuantity = availableQuantity + reservedQuantity + soldQuantity
+  const getPercentage = (quantity) => (
+    totalQuantity > 0 ? Math.round((quantity / totalQuantity) * 100) : 0
+  )
 
   const recentActivity = useMemo(() => {
-    return (movementsData?.items ?? []).slice(0, 4).map((row) => {
+    return activityData.map((row) => {
       const meta = ACTIVITY_META[row.movementType] || {
         label: row.movementType || 'Stock update',
         tone: 'neutral',
       }
-      const code = row.inventoryCode || row.inventoryId || '—'
+      const code = row.inventoryCode || '—'
       return {
         id: row.id,
-        title: row.inventoryName || 'Inventory item',
+        title: row.itemName || 'Inventory item',
         subtitle: `${meta.label} · ${code}`,
-        value: formatActivityValue(row.movementType, row.quantity),
+        value: formatActivityValue(row.movementType, row.quantityChange),
         tone: meta.tone,
       }
     })
-  }, [movementsData])
+  }, [activityData])
 
   const metricCards = [
     {
       label: 'Total Items',
-      value: stats.totalItems,
+      value: dashboardStats?.totalItems,
       dotClass: 'bg-[#6c5ce7]',
     },
     {
       label: 'Available',
-      value: stats.availableQty,
+      value: dashboardStats?.availableQuantity,
       dotClass: 'bg-emerald-500',
     },
     {
       label: 'Reserved',
-      value: stats.reservedQty,
+      value: dashboardStats?.reservedQuantity,
       dotClass: 'bg-amber-400',
     },
     {
       label: 'Sold',
-      value: stats.soldCount,
+      value: dashboardStats?.soldQuantity,
       dotClass: 'bg-rose-500',
     },
   ]
 
   const overviewBars = [
-    { label: 'Available', pct: stats.availablePct, barClass: 'bg-emerald-500' },
-    { label: 'Reserved', pct: stats.reservedPct, barClass: 'bg-amber-400' },
-    { label: 'Sold', pct: stats.soldPct, barClass: 'bg-rose-500' },
+    { label: 'Available', pct: getPercentage(availableQuantity), barClass: 'bg-emerald-500' },
+    { label: 'Reserved', pct: getPercentage(reservedQuantity), barClass: 'bg-amber-400' },
+    { label: 'Sold', pct: getPercentage(soldQuantity), barClass: 'bg-rose-500' },
   ]
 
   return (
@@ -153,11 +127,16 @@ export default function Dashboard() {
               <span className={`mt-1 size-2.5 rounded-full ${card.dotClass}`} />
             </div>
             <p className="mt-3 text-3xl font-bold tracking-tight text-slate-900">
-              {inventoryLoading ? '—' : card.value.toLocaleString()}
+              {statsLoading || statsError ? '—' : card.value.toLocaleString()}
             </p>
           </div>
         ))}
       </div>
+      {statsError && (
+        <p role="alert" className="mb-6 text-sm text-rose-600">
+          Unable to load dashboard stats: {statsErrorDetails.message}
+        </p>
+      )}
 
       <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
         <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -165,13 +144,18 @@ export default function Dashboard() {
             <h2 className="text-base font-bold text-slate-800">Recent Activity</h2>
           </div>
           <div className="divide-y divide-slate-100">
-            {movementsLoading && (
+            {activityLoading && (
               <p className="px-5 py-8 text-center text-sm text-slate-500">Loading activity…</p>
             )}
-            {!movementsLoading && recentActivity.length === 0 && (
+            {activityError && (
+              <p role="alert" className="px-5 py-8 text-center text-sm text-rose-600">
+                Unable to load recent activity: {activityErrorDetails.message}
+              </p>
+            )}
+            {!activityLoading && !activityError && recentActivity.length === 0 && (
               <p className="px-5 py-8 text-center text-sm text-slate-500">No recent stock activity</p>
             )}
-            {!movementsLoading &&
+            {!activityLoading && !activityError &&
               recentActivity.map((row) => (
                 <div key={row.id} className="flex items-center justify-between gap-4 px-5 py-4">
                   <div className="min-w-0">
@@ -196,21 +180,21 @@ export default function Dashboard() {
             <button
               type="button"
               onClick={() => navigate('/inventory/new')}
-              className="w-full rounded-xl bg-[#6c5ce7] px-4 py-3 text-sm font-semibold text-white hover:bg-[#5b4bd6]"
+              className="w-full rounded-lg bg-[#6c5ce7] px-4 py-3 text-sm font-semibold text-white hover:bg-[#5b4bd6]"
             >
               + Add Inventory Item
             </button>
             <button
               type="button"
-              onClick={() => navigate('/inventory/log-stock')}
-              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-800 hover:bg-slate-50"
+              onClick={() => navigate('/reports')}
+              className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-800 hover:bg-slate-50"
             >
-              Log Stock
+              Reports
             </button>
             <button
               type="button"
               onClick={() => navigate('/stock-history')}
-              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-800 hover:bg-slate-50"
+              className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-800 hover:bg-slate-50"
             >
               View Stock History
             </button>
@@ -229,13 +213,13 @@ export default function Dashboard() {
               <div className="mb-2 flex items-center justify-between text-sm">
                 <span className="font-medium text-slate-700">{bar.label}</span>
                 <span className="font-semibold text-slate-800">
-                  {inventoryLoading ? '—' : `${bar.pct}%`}
+                  {statsLoading || statsError ? '—' : `${bar.pct}%`}
                 </span>
               </div>
               <div className="h-2.5 overflow-hidden rounded-full bg-slate-100">
                 <div
                   className={`h-full rounded-full transition-all ${bar.barClass}`}
-                  style={{ width: inventoryLoading ? '0%' : `${bar.pct}%` }}
+                  style={{ width: statsLoading || statsError ? '0%' : `${bar.pct}%` }}
                 />
               </div>
             </div>

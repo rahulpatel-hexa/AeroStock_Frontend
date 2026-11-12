@@ -45,6 +45,8 @@ export const useCreateInventoryItem = () => {
     mutationFn: createInventoryItem,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['inventory'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'stats'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'recent-activity'] })
       toast.success('Item added successfully')
     },
     onError: (error) => toast.error(error.message),
@@ -58,6 +60,8 @@ export const useImportInventoryItems = () => {
     mutationFn: importInventoryItems,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['inventory'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'stats'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'recent-activity'] })
       toast.success('Inventory imported successfully')
     },
     onError: (error) => toast.error(error.message),
@@ -71,6 +75,8 @@ export const useUpdateInventoryItem = () => {
     mutationFn: updateInventoryItem,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['inventory'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'stats'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'recent-activity'] })
       toast.success('Item updated successfully')
     },
     onError: (error) => toast.error(error.message),
@@ -84,6 +90,7 @@ export const useUpdateInventoryItemStatus = () => {
     mutationFn: updateInventoryItemStatus,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['inventory'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'stats'] })
       toast.success('Item status updated')
     },
     onError: (error) => toast.error(error.message),
@@ -98,6 +105,8 @@ export const useCreateStockMovement = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['inventory'] })
       queryClient.invalidateQueries({ queryKey: ['stock-movements'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'stats'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'recent-activity'] })
       toast.success('Stock transaction recorded')
     },
     onError: (error) => toast.error(error.message),
