@@ -1,7 +1,8 @@
 import api from './api'
+import API from './apiEndpoints'
 
 export const loginApi = async (credentials) => {
-  const { data } = await api.post('/auth/login', credentials)
+  const { data } = await api.post(API.AUTH.LOGIN, credentials)
 
   // API response: { success, message, data: { token, user } }
   return {
@@ -11,11 +12,11 @@ export const loginApi = async (credentials) => {
 }
 
 export const updateMeApi = async ({ name }) => {
-  const { data } = await api.put('/auth/me', { name })
+  const { data } = await api.put(API.AUTH.ME, { name })
   return data.data.user
 }
 
 export const changePasswordApi = async (payload) => {
-  const { data } = await api.put('/auth/change-password', payload)
+  const { data } = await api.put(API.AUTH.CHANGE_PASSWORD, payload)
   return data
 }

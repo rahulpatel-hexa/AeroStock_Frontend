@@ -1,8 +1,9 @@
 import api from './api'
+import API from './apiEndpoints'
 
 // List API: data.data.items + data.data.pagination
 export const getInventoryItems = async (params = {}) => {
-  const { data } = await api.get('/inventory-items', {
+  const { data } = await api.get(API.INVENTORY_ITEMS.LIST, {
     params: { page: 1, limit: 10, ...params },
   })
   return {
@@ -13,7 +14,7 @@ export const getInventoryItems = async (params = {}) => {
 
 // Detail API: data.data.item
 export const getInventoryItem = async (id) => {
-  const { data } = await api.get(`/inventory-items/${id}`)
+  const { data } = await api.get(API.INVENTORY_ITEMS.DETAIL(id))
   return data.data.item
 }
 
@@ -75,38 +76,53 @@ const multipartConfig = {
 }
 
 export const createInventoryItem = async (formData) => {
-  const { data } = await api.post('/inventory-items', formData, multipartConfig)
+  const { data } = await api.post(
+    API.INVENTORY_ITEMS.CREATE,
+    formData,
+    multipartConfig,
+  )
   return data.data
 }
 
 export const importInventoryItems = async (file) => {
   const formData = new FormData()
   formData.append('file', file)
-  const { data } = await api.post('/inventory-items/import', formData, multipartConfig)
+  const { data } = await api.post(
+    API.INVENTORY_ITEMS.IMPORT,
+    formData,
+    multipartConfig,
+  )
   return data.data ?? data
 }
 
 export const updateInventoryItem = async ({ id, formData }) => {
-  const { data } = await api.put(`/inventory-items/${id}`, formData, multipartConfig)
+  const { data } = await api.put(
+    API.INVENTORY_ITEMS.UPDATE(id),
+    formData,
+    multipartConfig,
+  )
   return data.data
 }
 
 export const updateInventoryItemStatus = async ({ id, isActive }) => {
   const path = isActive
-    ? `/inventory-items/${id}/activate`
-    : `/inventory-items/${id}/deactivate`
+    ? API.INVENTORY_ITEMS.ACTIVATE(id)
+    : API.INVENTORY_ITEMS.DEACTIVATE(id)
 
   const { data } = await api.patch(path)
   return data.data.item ?? data.data
 }
 
 export const createStockMovement = async ({ id, payload }) => {
-  const { data } = await api.post(`/inventory-items/${id}/stock-movement`, payload)
+  const { data } = await api.post(
+    API.INVENTORY_ITEMS.CREATE_STOCK_MOVEMENT(id),
+    payload,
+  )
   return data.data
 }
 
 export const getStockMovements = async (params = {}) => {
-  const { data } = await api.get('/stock-movements', {
+  const { data } = await api.get(API.STOCK_MOVEMENTS.LIST, {
     params: { page: 1, limit: 100, ...params },
   })
   return {
@@ -116,7 +132,7 @@ export const getStockMovements = async (params = {}) => {
 }
 
 export const exportStockHistory = async (params = {}) => {
-  const { data } = await api.get('/stock-history/export', {
+  const { data } = await api.get(API.STOCK_HISTORY.EXPORT, {
     params,
     responseType: 'blob',
   })
@@ -124,7 +140,7 @@ export const exportStockHistory = async (params = {}) => {
 }
 
 export const getItemStockMovements = async (id, params = {}) => {
-  const { data } = await api.get(`/inventory-items/${id}/stock-movements`, {
+  const { data } = await api.get(API.INVENTORY_ITEMS.STOCK_MOVEMENTS(id), {
     params: { page: 1, limit: 10, ...params },
   })
   return {
