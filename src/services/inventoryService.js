@@ -115,6 +115,14 @@ export const getStockMovements = async (params = {}) => {
   }
 }
 
+export const exportStockHistory = async (params = {}) => {
+  const { data } = await api.get('/stock-history/export', {
+    params,
+    responseType: 'blob',
+  })
+  return data
+}
+
 export const getItemStockMovements = async (id, params = {}) => {
   const { data } = await api.get(`/inventory-items/${id}/stock-movements`, {
     params: { page: 1, limit: 10, ...params },

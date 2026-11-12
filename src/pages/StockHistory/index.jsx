@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Search } from 'lucide-react'
+import toast from 'react-hot-toast'
+import { exportStockHistory } from '../../services/inventoryService'
 import { useStockMovements } from '../../hooks/useInventory'
 import DataTable from '../../components/common/DataTable'
 import Pagination from '../../components/common/Pagination'
@@ -33,6 +35,7 @@ export default function StockHistory() {
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
+  const [isExporting, setIsExporting] = useState(false)
 
   const listParams = useMemo(() => {
     const params = { page, limit: pageSize }
@@ -63,6 +66,24 @@ export default function StockHistory() {
   const handlePageSizeChange = (size) => {
     setPageSize(size)
     setPage(1)
+  }
+
+  const handleExport = async () => {
+    setIsExporting(true)
+    try {
+      const query = search.trim() ? { search: search.trim() } : {}
+      const blob = await exportStockHistory(query)
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `stock-history-${new Date().toISOString().slice(0, 10)}.csv`
+      link.click()
+      window.URL.revokeObjectURL(url)
+    } catch (exportError) {
+      toast.error(exportError.message || 'Failed to export stock history')
+    } finally {
+      setIsExporting(false)
+    }
   }
 
   const pageNumbers = Array.from({ length: Math.min(3, totalPages) }, (_, i) => {
@@ -106,9 +127,11 @@ export default function StockHistory() {
         </div>
         <button
           type="button"
+          onClick={handleExport}
+          disabled={isExporting}
           className="shrink-0 rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
         >
-          Export History
+          {isExporting ? 'Exporting...' : 'Export History'}
         </button>
       </div>
 
