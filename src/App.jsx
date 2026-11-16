@@ -81,10 +81,38 @@ export default function App() {
 
         <Route path="/reports" element={<Reports />} />
 
-        <Route path="/users" element={<Users />} />
-        <Route path="/users/new" element={<AddUser />} />
-        <Route path="/users/:id/edit" element={<EditUser />} />
-        <Route path="/users/:id" element={<ViewUser />} />
+        <Route
+          path="/users"
+          element={
+            <ProtectedRoute allowedRoles={['ADMIN']}>
+              <Users />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/users/new"
+          element={
+            <ProtectedRoute allowedRoles={['ADMIN']}>
+              <AddUser />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/users/:id/edit"
+          element={
+            <ProtectedRoute allowedRoles={['ADMIN']}>
+              <EditUser />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/users/:id"
+          element={
+            <ProtectedRoute allowedRoles={['ADMIN']}>
+              <ViewUser />
+            </ProtectedRoute>
+          }
+        />
 
         <Route path="/settings" element={<Settings />} />
 

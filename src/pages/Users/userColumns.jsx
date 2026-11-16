@@ -53,9 +53,12 @@ export function getUserColumns({
       cell: ({ row }) => (
         <div className="flex min-w-0 items-center gap-3">
           <ProfileAvatar user={row.original} />
-          <span className="min-w-0 truncate font-semibold text-slate-800">
-            {row.original.name}
-          </span>
+          <div className="min-w-0">
+            <p className="truncate font-semibold text-slate-800">{row.original.name}</p>
+            <p className="text-xs capitalize text-slate-500">
+              {row.original.role?.toLowerCase() || '—'}
+            </p>
+          </div>
         </div>
       ),
     },
