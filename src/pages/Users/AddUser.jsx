@@ -40,6 +40,7 @@ export default function AddUser() {
       name: '',
       email: '',
       password: '',
+      role: 'STAFF',
       isActive: true,
     },
   })
@@ -50,6 +51,7 @@ export default function AddUser() {
         name: values.name,
         email: values.email,
         password: values.password,
+        role: values.role,
         isActive: values.isActive,
         ...(profileImage ? { profileImage } : {}),
       },
@@ -133,6 +135,12 @@ export default function AddUser() {
               className={inputClass(errors.password)}
               {...register('password')}
             />
+          </FormField>
+
+          <FormField label="Role" required error={errors.role}>
+            <select className={inputClass(errors.role)} {...register('role')}>
+              <option value="STAFF">Staff</option>
+            </select>
           </FormField>
 
           {/* <div>

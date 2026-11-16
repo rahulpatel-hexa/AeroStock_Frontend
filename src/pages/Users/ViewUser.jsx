@@ -82,6 +82,9 @@ export default function ViewUser() {
   const statusClass = user.isActive
     ? 'bg-emerald-50 text-emerald-700'
     : 'bg-slate-100 text-slate-600'
+  const role = user.role
+    ? user.role.charAt(0) + user.role.slice(1).toLowerCase()
+    : '—'
 
   return (
     <div className="space-y-5">
@@ -129,6 +132,7 @@ export default function ViewUser() {
           <div className="grid grid-cols-1 gap-x-8 gap-y-5 sm:grid-cols-2">
             <DetailField label="Name">{user.name || '—'}</DetailField>
             <DetailField label="Email">{user.email || '—'}</DetailField>
+            <DetailField label="Role">{role}</DetailField>
             <DetailField label="Status">{status}</DetailField>
           </div>
         </div>

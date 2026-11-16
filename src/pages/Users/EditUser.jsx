@@ -43,6 +43,7 @@ export default function EditUser() {
       name: '',
       email: '',
       password: '',
+      role: 'STAFF',
       isActive: true,
     },
   })
@@ -53,6 +54,7 @@ export default function EditUser() {
         name: user.name ?? '',
         email: user.email ?? '',
         password: '',
+        role: user.role ?? 'STAFF',
         isActive: user.isActive ?? true,
       })
     }
@@ -63,6 +65,7 @@ export default function EditUser() {
       id,
       name: values.name,
       email: values.email,
+      role: values.role,
       isActive: values.isActive,
     }
     if (values.password?.trim()) {
@@ -149,6 +152,12 @@ export default function EditUser() {
               className={inputClass(errors.email)}
               {...register('email')}
             />
+          </FormField>
+
+          <FormField label="Role" required error={errors.role}>
+            <select className={inputClass(errors.role)} {...register('role')}>
+              <option value="STAFF">Staff</option>
+            </select>
           </FormField>
 
           {/* <FormField label="Password" error={errors.password}>
